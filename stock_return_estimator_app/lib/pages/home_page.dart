@@ -340,6 +340,54 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(
+                              Icons.analytics,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Backtest Strategy',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo[700],
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontSize: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: isFormValid
+                                ? () async {
+                                    String? modelName;
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
+                                    modelName = prefs.getString(
+                                      'current_model_name',
+                                    );
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/backtest',
+                                      arguments: {
+                                        'ticker': tickerController.text
+                                            .trim()
+                                            .toUpperCase(),
+                                        'start': startDate.toIso8601String(),
+                                        'end': endDate.toIso8601String(),
+                                        'features': selectedFeatures,
+                                        if (modelName != null)
+                                          'model_name': modelName,
+                                      },
+                                    );
+                                  }
+                                : null,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

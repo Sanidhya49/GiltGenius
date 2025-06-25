@@ -55,4 +55,41 @@ class ApiService {
       throw Exception('Failed to fetch top losers: \\${response.statusCode}');
     }
   }
+
+  static Future<Map<String, dynamic>> runBacktest({
+    required String ticker,
+    required String start,
+    required String end,
+    required List<String> features,
+    String? modelName,
+    double threshold = 0.0,
+    int? holdingPeriod,
+    bool? allowShort,
+  }) async {
+    final url = backendUrl.replaceAll('/predict', '/backtest');
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'ticker': ticker,
+        'start': start,
+        'end': end,
+        'features': features,
+        if (modelName != null) 'model_name': modelName,
+        'threshold': threshold,
+        if (holdingPeriod != null) 'holding_period': holdingPeriod,
+        if (allowShort != null) 'allow_short': allowShort,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      final data = jsonDecode(response.body);
+      return {
+        'status': 'error',
+        'message':
+            data['message'] ?? 'Failed to run backtest: ${response.statusCode}',
+      };
+    }
+  }
 }

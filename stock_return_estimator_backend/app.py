@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import fetch_and_predict, save_model, load_model, list_models
+from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest
 import os
 import requests
 from datetime import datetime, timedelta
@@ -95,6 +95,25 @@ def top_losers():
         return jsonify({'status': 'success', 'data': data})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/backtest', methods=['POST'])
+def backtest():
+    data = request.get_json()
+    ticker = data.get("ticker")
+    start = data.get("start")
+    end = data.get("end")
+    features = data.get("features")  # Optional
+    model_name = data.get("model_name")  # Optional
+    threshold = data.get("threshold", 0.0)
+    holding_period = data.get("holding_period", 1)
+    allow_short = data.get("allow_short", False)
+    try:
+        result = run_backtest(ticker, start, end, features, model_name, threshold, holding_period, allow_short)
+        return jsonify({"status": "success", "data": result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
     if not os.path.exists('models'):
