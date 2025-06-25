@@ -25,4 +25,34 @@ class ApiService {
       throw Exception('Failed to fetch prediction: ${response.statusCode}');
     }
   }
+
+  static Future<List<dynamic>> fetchTopGainers() async {
+    final url = backendUrl.replaceAll('/predict', '/api/top_gainers');
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['status'] == 'success') {
+        return data['data'] as List<dynamic>;
+      } else {
+        throw Exception('Failed to fetch top gainers: \\${data['message']}');
+      }
+    } else {
+      throw Exception('Failed to fetch top gainers: \\${response.statusCode}');
+    }
+  }
+
+  static Future<List<dynamic>> fetchTopLosers() async {
+    final url = backendUrl.replaceAll('/predict', '/api/top_losers');
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['status'] == 'success') {
+        return data['data'] as List<dynamic>;
+      } else {
+        throw Exception('Failed to fetch top losers: \\${data['message']}');
+      }
+    } else {
+      throw Exception('Failed to fetch top losers: \\${response.statusCode}');
+    }
+  }
 }

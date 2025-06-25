@@ -2,9 +2,19 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from utils import fetch_and_predict, save_model, load_model, list_models
 import os
+import requests
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)  # Allow Flutter web/app to access this
+
+# Simple in-memory cache for daily updates
+cache = {
+    'gainers': {'data': None, 'timestamp': None},
+    'losers': {'data': None, 'timestamp': None},
+}
+
+NODE_API_BASE = 'http://localhost:3000/nse'  # Example: replace with your deployed Node.js API
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -56,6 +66,35 @@ def list_models_route():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/top_gainers', methods=['GET'])
+def top_gainers():
+    now = datetime.now()
+    # Cache for 10 minutes
+    if cache['gainers']['data'] and cache['gainers']['timestamp'] and (now - cache['gainers']['timestamp']) < timedelta(minutes=10):
+        return jsonify({'status': 'success', 'data': cache['gainers']['data']})
+    try:
+        resp = requests.get(f'{NODE_API_BASE}/get_gainers', timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        cache['gainers'] = {'data': data, 'timestamp': now}
+        return jsonify({'status': 'success', 'data': data})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/top_losers', methods=['GET'])
+def top_losers():
+    now = datetime.now()
+    if cache['losers']['data'] and cache['losers']['timestamp'] and (now - cache['losers']['timestamp']) < timedelta(minutes=10):
+        return jsonify({'status': 'success', 'data': cache['losers']['data']})
+    try:
+        resp = requests.get(f'{NODE_API_BASE}/get_losers', timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        cache['losers'] = {'data': data, 'timestamp': now}
+        return jsonify({'status': 'success', 'data': data})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == "__main__":
     if not os.path.exists('models'):
