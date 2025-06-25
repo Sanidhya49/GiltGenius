@@ -289,3 +289,4 @@ class _TopGainersPageState extends State<TopGainersPage>
     );
   }
 }
+ 

@@ -4,6 +4,7 @@ from sklearn.linear_model import LinearRegression
 import pandas_ta as ta
 import joblib
 import os
+import shap
 
 MODEL_DIR = 'models'
 LATEST_MODEL = os.path.join(MODEL_DIR, 'latest_model.pkl')
@@ -121,6 +122,14 @@ def fetch_and_predict(ticker, start, end, features=None, model_name=None):
     latest = df.iloc[-1:][features]
     next_day_pred = model.predict(latest)[0]
 
+    # SHAP explanation for the latest prediction
+    try:
+        explainer = shap.Explainer(model, X)
+        shap_values = explainer(latest)
+        shap_dict = dict(zip(features, shap_values.values[0]))
+    except Exception as e:
+        shap_dict = {f: 0.0 for f in features}  # fallback if SHAP fails
+
     return {
         "predicted_return": round(float(next_day_pred), 4),
         "market_returns": df['Cumulative_Market'].round(2).tolist()[-30:],
@@ -130,5 +139,6 @@ def fetch_and_predict(ticker, start, end, features=None, model_name=None):
             "strategy": round(df['Cumulative_Strategy'].iloc[-1] * 100 - 100, 2),
             "sharpe": round(df['Strategy_Return'].mean() / df['Strategy_Return'].std(), 2)
         },
-        "features_used": features
+        "features_used": features,
+        "shap_values": shap_dict
     }

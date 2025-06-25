@@ -21,6 +21,7 @@ class _ResultPageState extends State<ResultPage> {
   List<double>? strategyReturns;
   double? strategySummary, marketSummary, sharpe;
   List<String>? featuresUsed;
+  Map<String, double>? shapValues;
   final modelNameController = TextEditingController();
   bool isSavingModel = false;
   String? loadedModelName;
@@ -80,6 +81,11 @@ class _ResultPageState extends State<ResultPage> {
             marketSummary = d['summary']['market']?.toDouble();
             sharpe = d['summary']['sharpe']?.toDouble();
             featuresUsed = List<String>.from(d['features_used'] ?? []);
+            if (d['shap_values'] != null) {
+              shapValues = Map<String, double>.from(d['shap_values']);
+            } else {
+              shapValues = null;
+            }
             isLoading = false;
           });
         } else {
@@ -249,6 +255,36 @@ class _ResultPageState extends State<ResultPage> {
                                   ),
                                 ],
                               ),
+                              if (shapValues != null &&
+                                  shapValues!.isNotEmpty) ...[
+                                const SizedBox(height: 20),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Feature Impact (Explainable AI)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Tooltip(
+                                      message:
+                                          'Shows how much each feature contributed to the prediction. Positive = pushes return up, Negative = down.',
+                                      child: Icon(
+                                        Icons.info_outline,
+                                        size: 18,
+                                        color: Colors.indigo[400],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                _ShapBarChart(
+                                  shapValues: shapValues!,
+                                  featureLabels: featureLabels,
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -455,6 +491,83 @@ class _LegendDot extends StatelessWidget {
       width: 14,
       height: 14,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+}
+
+class _ShapBarChart extends StatelessWidget {
+  final Map<String, double> shapValues;
+  final Map<String, String> featureLabels;
+  const _ShapBarChart({required this.shapValues, required this.featureLabels});
+
+  @override
+  Widget build(BuildContext context) {
+    final sorted = shapValues.entries.toList()
+      ..sort((a, b) => b.value.abs().compareTo(a.value.abs()));
+    final maxVal = sorted.isNotEmpty
+        ? sorted.map((e) => e.value.abs()).reduce((a, b) => a > b ? a : b)
+        : 1.0;
+    final barColor = (double v) =>
+        v >= 0 ? Colors.green[400]! : Colors.red[400]!;
+    return Column(
+      children: [
+        ...sorted.map(
+          (e) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 3),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 110,
+                  child: Text(
+                    featureLabels[e.key] ?? e.key,
+                    style: const TextStyle(fontSize: 13),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Expanded(
+                  child: Stack(
+                    children: [
+                      Container(
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      FractionallySizedBox(
+                        alignment: e.value >= 0
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                        widthFactor:
+                            (e.value.abs() / (maxVal == 0 ? 1 : maxVal)).clamp(
+                              0,
+                              1,
+                            ),
+                        child: Container(
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: barColor(e.value),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  e.value.toStringAsFixed(3),
+                  style: TextStyle(
+                    color: barColor(e.value),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
