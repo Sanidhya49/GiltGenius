@@ -133,7 +133,16 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("📈 Stock Return Estimator")),
+      appBar: AppBar(
+        title: const Text("📈 Stock Return Estimator"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
