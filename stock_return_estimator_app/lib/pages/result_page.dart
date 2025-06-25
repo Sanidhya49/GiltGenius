@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
+import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
 
 class ResultPage extends StatefulWidget {
@@ -104,176 +105,208 @@ class _ResultPageState extends State<ResultPage> {
         title: Text("Prediction for $ticker"),
         actions: [
           IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Share',
+            onPressed: isLoading || errorMsg != null ? null : _shareResults,
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
             onPressed: isLoading ? null : fetchPrediction,
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : errorMsg != null
-            ? Center(
-                child: Text(
-                  errorMsg!,
-                  style: const TextStyle(color: Colors.red, fontSize: 18),
-                  textAlign: TextAlign.center,
-                ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Card(
-                    color: Colors.indigo[50],
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Ticker: $ticker',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
-                          ),
-                          if (featuresUsed != null && featuresUsed!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Text(
-                                'Features: ' +
-                                    featuresUsed!
-                                        .map((f) => featureLabels[f] ?? f)
-                                        .join(', '),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.black87,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : errorMsg != null
+              ? Center(
+                  child: Text(
+                    errorMsg!,
+                    style: const TextStyle(color: Colors.red, fontSize: 18),
+                    textAlign: TextAlign.center,
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Card(
+                      color: Colors.indigo[50],
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ticker: $ticker',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
+                            ),
+                            if (featuresUsed != null &&
+                                featuresUsed!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'Features: ' +
+                                      featuresUsed!
+                                          .map((f) => featureLabels[f] ?? f)
+                                          .join(', '),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Text(
-                            "Predicted Next-Day Return: " +
-                                ((predictedReturn ?? 0) * 100).toStringAsFixed(
-                                  2,
-                                ) +
-                                "%",
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                    Card(
+                      elevation: 2,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Text(
+                              "Predicted Next-Day Return: " +
+                                  ((predictedReturn ?? 0) * 100)
+                                      .toStringAsFixed(2) +
+                                  "%",
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _StatCard(
-                                icon: Icons.trending_up,
-                                label: "Strategy Return",
-                                value:
-                                    (strategySummary?.toStringAsFixed(2) ??
-                                        '-') +
-                                    "%",
-                                color: Colors.green[700],
-                              ),
-                              _StatCard(
-                                icon: Icons.show_chart,
-                                label: "Market Return",
-                                value:
-                                    (marketSummary?.toStringAsFixed(2) ?? '-') +
-                                    "%",
-                                color: Colors.blue[700],
-                              ),
-                              _StatCard(
-                                icon: Icons.balance,
-                                label: "Sharpe",
-                                value: (sharpe?.toStringAsFixed(2) ?? '-'),
-                                color: Colors.deepPurple[700],
-                              ),
-                            ],
-                          ),
-                        ],
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _StatCard(
+                                  icon: Icons.trending_up,
+                                  label: "Strategy Return",
+                                  value:
+                                      (strategySummary?.toStringAsFixed(2) ??
+                                          '-') +
+                                      "%",
+                                  color: Colors.green[700],
+                                ),
+                                _StatCard(
+                                  icon: Icons.show_chart,
+                                  label: "Market Return",
+                                  value:
+                                      (marketSummary?.toStringAsFixed(2) ??
+                                          '-') +
+                                      "%",
+                                  color: Colors.blue[700],
+                                ),
+                                _StatCard(
+                                  icon: Icons.balance,
+                                  label: "Sharpe",
+                                  value: (sharpe?.toStringAsFixed(2) ?? '-'),
+                                  color: Colors.deepPurple[700],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const Text(
-                    "Cumulative Returns",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 200,
-                    child: LineChart(
-                      LineChartData(
-                        titlesData: FlTitlesData(show: false),
-                        borderData: FlBorderData(show: false),
-                        lineBarsData: [
-                          if (marketReturns != null)
-                            LineChartBarData(
-                              spots: List.generate(
-                                marketReturns!.length,
-                                (i) => FlSpot(i.toDouble(), marketReturns![i]),
+                    const Text(
+                      "Cumulative Returns",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 200,
+                      child: LineChart(
+                        LineChartData(
+                          titlesData: FlTitlesData(show: false),
+                          borderData: FlBorderData(show: false),
+                          lineBarsData: [
+                            if (marketReturns != null)
+                              LineChartBarData(
+                                spots: List.generate(
+                                  marketReturns!.length,
+                                  (i) =>
+                                      FlSpot(i.toDouble(), marketReturns![i]),
+                                ),
+                                isCurved: true,
+                                barWidth: 2,
+                                color: Colors.blue,
+                                dotData: FlDotData(show: false),
                               ),
-                              isCurved: true,
-                              barWidth: 2,
-                              color: Colors.blue,
-                              dotData: FlDotData(show: false),
-                            ),
-                          if (strategyReturns != null)
-                            LineChartBarData(
-                              spots: List.generate(
-                                strategyReturns!.length,
-                                (i) =>
-                                    FlSpot(i.toDouble(), strategyReturns![i]),
+                            if (strategyReturns != null)
+                              LineChartBarData(
+                                spots: List.generate(
+                                  strategyReturns!.length,
+                                  (i) =>
+                                      FlSpot(i.toDouble(), strategyReturns![i]),
+                                ),
+                                isCurved: true,
+                                barWidth: 2,
+                                color: Colors.green,
+                                dotData: FlDotData(show: false),
                               ),
-                              isCurved: true,
-                              barWidth: 2,
-                              color: Colors.green,
-                              dotData: FlDotData(show: false),
-                            ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _LegendDot(color: Colors.green),
-                      const SizedBox(width: 4),
-                      const Text('Strategy'),
-                      const SizedBox(width: 16),
-                      _LegendDot(color: Colors.blue),
-                      const SizedBox(width: 4),
-                      const Text('Market'),
-                    ],
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text("Back"),
-                      onPressed: () => Navigator.pop(context),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _LegendDot(color: Colors.green),
+                        const SizedBox(width: 4),
+                        const Text('Strategy'),
+                        const SizedBox(width: 16),
+                        _LegendDot(color: Colors.blue),
+                        const SizedBox(width: 4),
+                        const Text('Market'),
+                      ],
                     ),
-                  ),
-                ],
-              ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.arrow_back),
+                        label: const Text("Back"),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
     );
+  }
+
+  void _shareResults() {
+    final featuresStr = (featuresUsed ?? features)
+        .map((f) => featureLabels[f] ?? f)
+        .join(', ');
+    final summary =
+        'Stock: $ticker\nDate Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}\nFeatures: $featuresStr\n' +
+        'Predicted Next-Day Return: '
+            '${((predictedReturn ?? 0) * 100).toStringAsFixed(2)}%\n' +
+        'Strategy Return: ${strategySummary?.toStringAsFixed(2) ?? '-'}%\n' +
+        'Market Return: ${marketSummary?.toStringAsFixed(2) ?? '-'}%\n' +
+        'Sharpe: ${sharpe?.toStringAsFixed(2) ?? '-'}';
+    Share.share(summary, subject: 'Stock Return Prediction for $ticker');
   }
 }
 
