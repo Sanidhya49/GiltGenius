@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants.dart';
 import '../local_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -40,7 +41,24 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     selectedFeatures = List.from(allFeatures);
+    _loadUserDefaults();
     _loadFavorites();
+  }
+
+  Future<void> _loadUserDefaults() async {
+    final settings = await LocalStorage.loadSettings();
+    setState(() {
+      if (settings['defaultFeatures'] != null) {
+        selectedFeatures = List<String>.from(settings['defaultFeatures']);
+      }
+      if (settings['defaultStartDate'] != null) {
+        startDate =
+            DateTime.tryParse(settings['defaultStartDate']) ?? startDate;
+      }
+      if (settings['defaultEndDate'] != null) {
+        endDate = DateTime.tryParse(settings['defaultEndDate']) ?? endDate;
+      }
+    });
   }
 
   Future<void> _loadFavorites() async {
@@ -128,6 +146,23 @@ class _HomePageState extends State<HomePage> {
   Future<void> deleteFavorite(int index) async {
     await LocalStorage.deleteFavorite(index);
     await _loadFavorites();
+  }
+
+  void _onPredictPressed() async {
+    String? modelName;
+    final prefs = await SharedPreferences.getInstance();
+    modelName = prefs.getString('current_model_name');
+    Navigator.pushNamed(
+      context,
+      '/result',
+      arguments: {
+        'ticker': tickerController.text.trim().toUpperCase(),
+        'start': startDate.toIso8601String(),
+        'end': endDate.toIso8601String(),
+        'features': selectedFeatures,
+        if (modelName != null) 'model_name': modelName,
+      },
+    );
   }
 
   @override
@@ -251,22 +286,7 @@ class _HomePageState extends State<HomePage> {
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.analytics),
                               label: const Text("Predict"),
-                              onPressed: isFormValid
-                                  ? () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/result',
-                                        arguments: {
-                                          'ticker': tickerController.text
-                                              .trim()
-                                              .toUpperCase(),
-                                          'start': startDate.toIso8601String(),
-                                          'end': endDate.toIso8601String(),
-                                          'features': selectedFeatures,
-                                        },
-                                      );
-                                    }
-                                  : null,
+                              onPressed: isFormValid ? _onPredictPressed : null,
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,

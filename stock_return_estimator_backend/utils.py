@@ -2,8 +2,37 @@ import pandas as pd
 import yfinance as yf
 from sklearn.linear_model import LinearRegression
 import pandas_ta as ta
+import joblib
+import os
 
-def fetch_and_predict(ticker, start, end, features=None):
+MODEL_DIR = 'models'
+LATEST_MODEL = os.path.join(MODEL_DIR, 'latest_model.pkl')
+
+# Save the model to disk
+model_cache = {}
+
+def save_model(model_name='latest_model.pkl'):
+    global model_cache
+    if 'model' in model_cache:
+        os.makedirs(MODEL_DIR, exist_ok=True)  # Ensure directory exists
+        path = os.path.join(MODEL_DIR, model_name)
+        joblib.dump(model_cache['model'], path)
+    else:
+        raise ValueError('No model trained yet to save.')
+
+def load_model(model_name='latest_model.pkl'):
+    path = os.path.join(MODEL_DIR, model_name)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f'Model {model_name} not found.')
+    model_cache['model'] = joblib.load(path)
+    return model_cache['model']
+
+def list_models():
+    if not os.path.exists(MODEL_DIR):
+        return []
+    return [f for f in os.listdir(MODEL_DIR) if f.endswith('.pkl')]
+
+def fetch_and_predict(ticker, start, end, features=None, model_name=None):
     # Only keep the date part (YYYY-MM-DD)
     start = start[:10]
     end = end[:10]
@@ -26,10 +55,30 @@ def fetch_and_predict(ticker, start, end, features=None):
         df['BBU_20'] = bb['BBU_20_2.0']
     else:
         df['BBL_20'] = df['BBM_20'] = df['BBU_20'] = None
+    # --- New indicators ---
+    macd = ta.macd(df['Close'])
+    if macd is not None:
+        df['MACD'] = macd['MACD_12_26_9']
+        df['MACD_signal'] = macd['MACDs_12_26_9']
+        df['MACD_hist'] = macd['MACDh_12_26_9']
+    else:
+        df['MACD'] = df['MACD_signal'] = df['MACD_hist'] = None
+    stoch = ta.stoch(df['High'], df['Low'], df['Close'])
+    if stoch is not None:
+        df['STOCH_k'] = stoch['STOCHk_14_3_3']
+        df['STOCH_d'] = stoch['STOCHd_14_3_3']
+    else:
+        df['STOCH_k'] = df['STOCH_d'] = None
+    df['ATR_14'] = ta.atr(df['High'], df['Low'], df['Close'], length=14)
     df.dropna(inplace=True)
 
     # Default features if not specified
-    all_features = ['Return_Lag_1', 'Return_Lag_5', 'MA_10', 'RSI_14', 'BBL_20', 'BBM_20', 'BBU_20']
+    all_features = [
+        'Return_Lag_1', 'Return_Lag_5', 'MA_10', 'RSI_14',
+        'BBL_20', 'BBM_20', 'BBU_20',
+        'MACD', 'MACD_signal', 'MACD_hist',
+        'STOCH_k', 'STOCH_d', 'ATR_14'
+    ]
     if features is None:
         features = all_features
     else:
@@ -43,7 +92,25 @@ def fetch_and_predict(ticker, start, end, features=None):
 
     X = df[features]
     y = df['Return']
-    model = LinearRegression().fit(X, y)
+
+    # Model logic
+    global model_cache
+    if model_name:
+        # Try to load model if specified
+        try:
+            model = load_model(model_name)
+        except Exception:
+            model = LinearRegression().fit(X, y)
+            model_cache['model'] = model
+            save_model(model_name)
+    else:
+        model = LinearRegression().fit(X, y)
+        model_cache['model'] = model
+        save_model('latest_model.pkl')
+
+    # Always autosave the model under the loaded model's name after prediction
+    if model_name:
+        save_model(model_name)
 
     df['Predicted_Return'] = model.predict(X)
     df['Strategy_Return'] = df['Predicted_Return'].apply(lambda r: 1 if r > 0 else 0) * df['Return']

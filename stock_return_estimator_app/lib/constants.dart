@@ -8,6 +8,12 @@ const List<String> allFeatures = [
   'BBL_20',
   'BBM_20',
   'BBU_20',
+  'MACD',
+  'MACD_signal',
+  'MACD_hist',
+  'STOCH_k',
+  'STOCH_d',
+  'ATR_14',
 ];
 
 const Map<String, String> featureLabels = {
@@ -18,4 +24,10 @@ const Map<String, String> featureLabels = {
   'BBL_20': 'BB Lower (20)',
   'BBM_20': 'BB Middle (20)',
   'BBU_20': 'BB Upper (20)',
-}; 
+  'MACD': 'MACD',
+  'MACD_signal': 'MACD Signal',
+  'MACD_hist': 'MACD Histogram',
+  'STOCH_k': 'Stochastic %K',
+  'STOCH_d': 'Stochastic %D',
+  'ATR_14': 'ATR (14)',
+};

@@ -21,6 +21,9 @@ class _ResultPageState extends State<ResultPage> {
   List<double>? strategyReturns;
   double? strategySummary, marketSummary, sharpe;
   List<String>? featuresUsed;
+  final modelNameController = TextEditingController();
+  bool isSavingModel = false;
+  String? loadedModelName;
 
   final Map<String, String> featureLabels = {
     'Return_Lag_1': '1-Day Return Lag',
@@ -41,6 +44,7 @@ class _ResultPageState extends State<ResultPage> {
     start = args['start'];
     end = args['end'];
     features = List<String>.from(args['features'] ?? []);
+    loadedModelName = args['model_name'];
     fetchPrediction();
   }
 
@@ -136,163 +140,263 @@ class _ResultPageState extends State<ResultPage> {
                     textAlign: TextAlign.center,
                   ),
                 )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Card(
-                      color: Colors.indigo[50],
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Ticker: $ticker',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+              : SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (loadedModelName != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.info_outline,
+                                size: 18,
+                                color: Colors.indigo,
                               ),
-                            ),
-                            Text(
-                              'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
-                            ),
-                            if (featuresUsed != null &&
-                                featuresUsed!.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  'Features: ' +
-                                      featuresUsed!
-                                          .map((f) => featureLabels[f] ?? f)
-                                          .join(', '),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.black87,
+                              const SizedBox(width: 6),
+                              Text(
+                                'Currently loaded model: $loadedModelName',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.indigo,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Card(
+                        color: Colors.indigo[50],
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Ticker: $ticker',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
+                              ),
+                              if (featuresUsed != null &&
+                                  featuresUsed!.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Features: ' +
+                                        featuresUsed!
+                                            .map((f) => featureLabels[f] ?? f)
+                                            .join(', '),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.black87,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Text(
-                              "Predicted Next-Day Return: " +
-                                  ((predictedReturn ?? 0) * 100)
-                                      .toStringAsFixed(2) +
-                                  "%",
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                      Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Predicted Next-Day Return: " +
+                                    ((predictedReturn ?? 0) * 100)
+                                        .toStringAsFixed(2) +
+                                    "%",
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _StatCard(
-                                  icon: Icons.trending_up,
-                                  label: "Strategy Return",
-                                  value:
-                                      (strategySummary?.toStringAsFixed(2) ??
-                                          '-') +
-                                      "%",
-                                  color: Colors.green[700],
-                                ),
-                                _StatCard(
-                                  icon: Icons.show_chart,
-                                  label: "Market Return",
-                                  value:
-                                      (marketSummary?.toStringAsFixed(2) ??
-                                          '-') +
-                                      "%",
-                                  color: Colors.blue[700],
-                                ),
-                                _StatCard(
-                                  icon: Icons.balance,
-                                  label: "Sharpe",
-                                  value: (sharpe?.toStringAsFixed(2) ?? '-'),
-                                  color: Colors.deepPurple[700],
-                                ),
-                              ],
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  _StatCard(
+                                    icon: Icons.trending_up,
+                                    label: "Strategy Return",
+                                    value:
+                                        (strategySummary?.toStringAsFixed(2) ??
+                                            '-') +
+                                        "%",
+                                    color: Colors.green[700],
+                                  ),
+                                  _StatCard(
+                                    icon: Icons.show_chart,
+                                    label: "Market Return",
+                                    value:
+                                        (marketSummary?.toStringAsFixed(2) ??
+                                            '-') +
+                                        "%",
+                                    color: Colors.blue[700],
+                                  ),
+                                  _StatCard(
+                                    icon: Icons.balance,
+                                    label: "Sharpe",
+                                    value: (sharpe?.toStringAsFixed(2) ?? '-'),
+                                    color: Colors.deepPurple[700],
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const Text(
-                      "Cumulative Returns",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 200,
-                      child: LineChart(
-                        LineChartData(
-                          titlesData: FlTitlesData(show: false),
-                          borderData: FlBorderData(show: false),
-                          lineBarsData: [
-                            if (marketReturns != null)
-                              LineChartBarData(
-                                spots: List.generate(
-                                  marketReturns!.length,
-                                  (i) =>
-                                      FlSpot(i.toDouble(), marketReturns![i]),
+                      const Text(
+                        "Cumulative Returns",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 200,
+                        child: LineChart(
+                          LineChartData(
+                            titlesData: FlTitlesData(show: false),
+                            borderData: FlBorderData(show: false),
+                            lineBarsData: [
+                              if (marketReturns != null)
+                                LineChartBarData(
+                                  spots: List.generate(
+                                    marketReturns!.length,
+                                    (i) =>
+                                        FlSpot(i.toDouble(), marketReturns![i]),
+                                  ),
+                                  isCurved: true,
+                                  barWidth: 2,
+                                  color: Colors.blue,
+                                  dotData: FlDotData(show: false),
                                 ),
-                                isCurved: true,
-                                barWidth: 2,
-                                color: Colors.blue,
-                                dotData: FlDotData(show: false),
-                              ),
-                            if (strategyReturns != null)
-                              LineChartBarData(
-                                spots: List.generate(
-                                  strategyReturns!.length,
-                                  (i) =>
-                                      FlSpot(i.toDouble(), strategyReturns![i]),
+                              if (strategyReturns != null)
+                                LineChartBarData(
+                                  spots: List.generate(
+                                    strategyReturns!.length,
+                                    (i) => FlSpot(
+                                      i.toDouble(),
+                                      strategyReturns![i],
+                                    ),
+                                  ),
+                                  isCurved: true,
+                                  barWidth: 2,
+                                  color: Colors.green,
+                                  dotData: FlDotData(show: false),
                                 ),
-                                isCurved: true,
-                                barWidth: 2,
-                                color: Colors.green,
-                                dotData: FlDotData(show: false),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _LegendDot(color: Colors.green),
-                        const SizedBox(width: 4),
-                        const Text('Strategy'),
-                        const SizedBox(width: 16),
-                        _LegendDot(color: Colors.blue),
-                        const SizedBox(width: 4),
-                        const Text('Market'),
-                      ],
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.arrow_back),
-                        label: const Text("Back"),
-                        onPressed: () => Navigator.pop(context),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _LegendDot(color: Colors.green),
+                          const SizedBox(width: 4),
+                          const Text('Strategy'),
+                          const SizedBox(width: 16),
+                          _LegendDot(color: Colors.blue),
+                          const SizedBox(width: 4),
+                          const Text('Market'),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      _buildSaveModelSection(),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.arrow_back),
+                          label: const Text("Back"),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
         ),
       ),
     );
+  }
+
+  Widget _buildSaveModelSection() {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Save Model',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: modelNameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Model Name',
+                      hintText: 'e.g. my_ibm_model',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                isSavingModel
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : ElevatedButton.icon(
+                        icon: const Icon(Icons.save),
+                        label: const Text('Save Model'),
+                        onPressed: _saveModel,
+                      ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveModel() async {
+    final name = modelNameController.text.trim();
+    if (name.isEmpty) return;
+    setState(() => isSavingModel = true);
+    final modelName = name.endsWith('.pkl') ? name : '$name.pkl';
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:5000/save_model'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'model_name': modelName}),
+      );
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Model saved as $modelName')));
+        modelNameController.clear();
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Failed to save model')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error saving model')));
+    }
+    setState(() => isSavingModel = false);
   }
 
   void _shareResults() {
