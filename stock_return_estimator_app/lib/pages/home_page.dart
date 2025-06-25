@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../constants.dart';
+import '../local_storage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,16 +31,23 @@ class _HomePageState extends State<HomePage> {
     'BBM_20': 'BB Middle (20)',
     'BBU_20': 'BB Upper (20)',
   };
-  List<String> selectedFeatures = [
-    'Return_Lag_1',
-    'Return_Lag_5',
-    'MA_10',
-    'RSI_14',
-    'BBL_20',
-    'BBM_20',
-    'BBU_20',
-  ];
+  late List<String> selectedFeatures;
   String? errorMsg;
+  List<Map<String, dynamic>> favorites = [];
+  bool isLoadingFavorites = true;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedFeatures = List.from(allFeatures);
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    setState(() => isLoadingFavorites = true);
+    favorites = await LocalStorage.loadFavorites();
+    setState(() => isLoadingFavorites = false);
+  }
 
   bool get isTickerValid =>
       tickerController.text.trim().isNotEmpty &&
@@ -93,140 +102,261 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> saveCurrentAsFavorite() async {
+    final fav = {
+      'ticker': tickerController.text.trim().toUpperCase(),
+      'start': startDate.toIso8601String(),
+      'end': endDate.toIso8601String(),
+      'features': List<String>.from(selectedFeatures),
+    };
+    await LocalStorage.saveFavorite(fav);
+    await _loadFavorites();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Favorite saved!')));
+  }
+
+  void loadFavorite(Map<String, dynamic> fav) {
+    setState(() {
+      tickerController.text = fav['ticker'] ?? '';
+      startDate = DateTime.parse(fav['start']);
+      endDate = DateTime.parse(fav['end']);
+      selectedFeatures = List<String>.from(fav['features'] ?? allFeatures);
+    });
+  }
+
+  Future<void> deleteFavorite(int index) async {
+    await LocalStorage.deleteFavorite(index);
+    await _loadFavorites();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("📈 Stock Return Estimator")),
       body: Center(
         child: SingleChildScrollView(
-          child: Card(
-            elevation: 6,
-            margin: const EdgeInsets.all(24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: tickerController,
-                    decoration: InputDecoration(
-                      labelText: "Enter Stock Ticker (e.g. AAPL, TSLA)",
-                      errorText: isTickerValid ? null : 'Enter a valid ticker',
-                      prefixIcon: const Icon(Icons.search),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Card(
+                elevation: 6,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Expanded(
-                        child: ListTile(
-                          title: const Text("Start Date"),
-                          subtitle: Text(
-                            DateFormat('yyyy-MM-dd').format(startDate),
+                      TextField(
+                        controller: tickerController,
+                        decoration: InputDecoration(
+                          labelText: "Enter Stock Ticker (e.g. AAPL, TSLA)",
+                          errorText: isTickerValid
+                              ? null
+                              : 'Enter a valid ticker',
+                          prefixIcon: const Icon(Icons.search),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ListTile(
+                              title: const Text("Start Date"),
+                              subtitle: Text(
+                                DateFormat('yyyy-MM-dd').format(startDate),
+                              ),
+                              leading: const Icon(Icons.calendar_today),
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: startDate,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (picked != null)
+                                  setState(() => startDate = picked);
+                              },
+                            ),
                           ),
-                          leading: const Icon(Icons.calendar_today),
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: startDate,
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime.now(),
-                            );
-                            if (picked != null)
-                              setState(() => startDate = picked);
-                          },
+                          Expanded(
+                            child: ListTile(
+                              title: const Text("End Date"),
+                              subtitle: Text(
+                                DateFormat('yyyy-MM-dd').format(endDate),
+                              ),
+                              leading: const Icon(Icons.calendar_today),
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: endDate,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (picked != null)
+                                  setState(() => endDate = picked);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (!isDateRangeValid)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: Text(
+                            'End date must be after start date',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      const SizedBox(height: 20),
+                      ListTile(
+                        title: const Text('Features'),
+                        subtitle: Text(
+                          selectedFeatures
+                              .map((f) => featureLabels[f] ?? f)
+                              .join(', '),
+                        ),
+                        leading: const Icon(Icons.settings),
+                        trailing: ElevatedButton.icon(
+                          icon: const Icon(Icons.edit),
+                          label: const Text('Edit'),
+                          onPressed: showFeatureSelector,
                         ),
                       ),
-                      Expanded(
-                        child: ListTile(
-                          title: const Text("End Date"),
-                          subtitle: Text(
-                            DateFormat('yyyy-MM-dd').format(endDate),
+                      const SizedBox(height: 24),
+                      if (errorMsg != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            errorMsg!,
+                            style: const TextStyle(color: Colors.red),
                           ),
-                          leading: const Icon(Icons.calendar_today),
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: endDate,
-                              firstDate: DateTime(2000),
-                              lastDate: DateTime.now(),
-                            );
-                            if (picked != null)
-                              setState(() => endDate = picked);
-                          },
                         ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              icon: const Icon(Icons.analytics),
+                              label: const Text("Predict"),
+                              onPressed: isFormValid
+                                  ? () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/result',
+                                        arguments: {
+                                          'ticker': tickerController.text
+                                              .trim()
+                                              .toUpperCase(),
+                                          'start': startDate.toIso8601String(),
+                                          'end': endDate.toIso8601String(),
+                                          'features': selectedFeatures,
+                                        },
+                                      );
+                                    }
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                textStyle: const TextStyle(fontSize: 18),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.star),
+                            label: const Text("Save Favorite"),
+                            onPressed: isFormValid
+                                ? saveCurrentAsFavorite
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.amber[700],
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontSize: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  if (!isDateRangeValid)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4),
-                      child: Text(
-                        'End date must be after start date',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  const SizedBox(height: 20),
-                  ListTile(
-                    title: const Text('Features'),
-                    subtitle: Text(
-                      selectedFeatures
-                          .map((f) => featureLabels[f] ?? f)
-                          .join(', '),
-                    ),
-                    leading: const Icon(Icons.settings),
-                    trailing: ElevatedButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'),
-                      onPressed: showFeatureSelector,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  if (errorMsg != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        errorMsg!,
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.analytics),
-                      label: const Text("🔮 Predict"),
-                      onPressed: isFormValid
-                          ? () {
-                              Navigator.pushNamed(
-                                context,
-                                '/result',
-                                arguments: {
-                                  'ticker': tickerController.text
-                                      .trim()
-                                      .toUpperCase(),
-                                  'start': startDate.toIso8601String(),
-                                  'end': endDate.toIso8601String(),
-                                  'features': selectedFeatures,
-                                },
-                              );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        textStyle: const TextStyle(fontSize: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Favorites',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.indigo[900],
+                    ),
+                  ),
+                ),
+              ),
+              Card(
+                elevation: 2,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: isLoadingFavorites
+                    ? const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : favorites.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: Text('No favorites yet.')),
+                      )
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: favorites.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final fav = favorites[index];
+                          return ListTile(
+                            title: Text(
+                              fav['ticker'] ?? '',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${fav['start']?.substring(0, 10) ?? ''} to ${fav['end']?.substring(0, 10) ?? ''}\n' +
+                                  (fav['features'] as List<dynamic>)
+                                      .map((f) => featureLabels[f] ?? f)
+                                      .join(', '),
+                            ),
+                            isThreeLine: true,
+                            leading: const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => deleteFavorite(index),
+                              tooltip: 'Delete',
+                            ),
+                            onTap: () => loadFavorite(fav),
+                          );
+                        },
+                      ),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
