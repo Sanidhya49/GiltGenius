@@ -153,4 +153,38 @@ class ApiService {
       rethrow;
     }
   }
+
+  static Future<Map<String, dynamic>> getSentimentAnalysis(
+    String ticker,
+  ) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(backendUrl.replaceAll('/predict', '/sentiment')),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'ticker': ticker}),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          return data['data'];
+        } else {
+          throw Exception(data['message'] ?? 'Sentiment analysis failed');
+        }
+      } else {
+        try {
+          final data = jsonDecode(response.body);
+          throw Exception(
+            data['message'] ??
+                'Failed to get sentiment: ${response.statusCode}',
+          );
+        } catch (_) {
+          throw Exception('Failed to get sentiment: ${response.statusCode}');
+        }
+      }
+    } on TimeoutException {
+      rethrow;
+    }
+  }
 }

@@ -5,6 +5,7 @@ import 'pages/settings_page.dart';
 import 'pages/top_gainers_page.dart';
 import 'pages/backtest_page.dart';
 import 'pages/portfolio_page.dart';
+import 'pages/sentiment_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
         '/top_gainers': (context) => const TopGainersPage(),
         '/backtest': (context) => const BacktestPage(),
         '/portfolio': (context) => const PortfolioPage(),
+        '/sentiment': (context) => const SentimentPage(),
       },
     );
   }

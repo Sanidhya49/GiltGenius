@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest, optimize_portfolio
+from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest, optimize_portfolio, get_stock_sentiment
 import os
 import requests
 from datetime import datetime, timedelta
@@ -127,6 +127,22 @@ def optimize_portfolio_route():
     except ValueError as e:
         # User-facing error (e.g., no asset exceeds risk-free rate)
         return jsonify({'status': 'error', 'message': str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/sentiment', methods=['POST'])
+def sentiment_analysis():
+    data = request.get_json()
+    ticker = data.get('ticker')
+    
+    if not ticker:
+        return jsonify({'status': 'error', 'message': 'Ticker is required'}), 400
+    
+    try:
+        result = get_stock_sentiment(ticker.upper())
+        return jsonify({'status': 'success', 'data': result})
     except Exception as e:
         import traceback
         traceback.print_exc()

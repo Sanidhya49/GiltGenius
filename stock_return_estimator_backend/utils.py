@@ -7,12 +7,242 @@ import os
 import shap
 import math
 from pypfopt import EfficientFrontier, risk_models, expected_returns
+import requests
+from textblob import TextBlob
+from datetime import datetime, timedelta
+import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 MODEL_DIR = 'models'
 LATEST_MODEL = os.path.join(MODEL_DIR, 'latest_model.pkl')
 
+# NewsAPI configuration (you'll need to get a free API key from newsapi.org)
+NEWS_API_KEY = os.getenv('NEWS_API_KEY', 'your_news_api_key_here')
+
 # Save the model to disk
 model_cache = {}
+
+def analyze_sentiment(text):
+    """Analyze sentiment of text using TextBlob"""
+    try:
+        blob = TextBlob(text)
+        return {
+            'polarity': blob.sentiment.polarity,  # -1 to 1 (negative to positive)
+            'subjectivity': blob.sentiment.subjectivity,  # 0 to 1 (objective to subjective)
+            'sentiment': 'positive' if blob.sentiment.polarity > 0.1 else 'negative' if blob.sentiment.polarity < -0.1 else 'neutral'
+        }
+    except Exception as e:
+        return {
+            'polarity': 0.0,
+            'subjectivity': 0.0,
+            'sentiment': 'neutral'
+        }
+
+def fetch_news_sentiment(ticker, days_back=7):
+    """Fetch news articles and analyze sentiment for a given ticker"""
+    try:
+        # Get company name from yfinance for better news search
+        stock = yf.Ticker(ticker)
+        company_name = stock.info.get('longName', ticker)
+        
+        # Search for news articles
+        url = f"https://newsapi.org/v2/everything"
+        params = {
+            'q': f'"{ticker}" OR "{company_name}"',
+            'from': (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d'),
+            'to': datetime.now().strftime('%Y-%m-%d'),
+            'language': 'en',
+            'sortBy': 'publishedAt',
+            'apiKey': NEWS_API_KEY,
+            'pageSize': 20
+        }
+        
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        if data.get('status') != 'ok':
+            return {
+                'error': 'News API error',
+                'articles': [],
+                'sentiment_summary': {'polarity': 0.0, 'subjectivity': 0.0, 'sentiment': 'neutral'}
+            }
+        
+        articles = data.get('articles', [])
+        if not articles:
+            return {
+                'error': 'No news articles found',
+                'articles': [],
+                'sentiment_summary': {'polarity': 0.0, 'subjectivity': 0.0, 'sentiment': 'neutral'}
+            }
+        
+        # Analyze sentiment for each article
+        sentiments = []
+        processed_articles = []
+        
+        for article in articles:
+            title = article.get('title', '')
+            description = article.get('description', '')
+            content = article.get('content', '')
+            
+            # Combine title and description for sentiment analysis
+            text = f"{title}. {description}"
+            sentiment = analyze_sentiment(text)
+            
+            processed_article = {
+                'title': title,
+                'description': description,
+                'url': article.get('url', ''),
+                'publishedAt': article.get('publishedAt', ''),
+                'source': article.get('source', {}).get('name', ''),
+                'sentiment': sentiment
+            }
+            
+            processed_articles.append(processed_article)
+            sentiments.append(sentiment['polarity'])
+        
+        # Calculate overall sentiment
+        if sentiments:
+            avg_polarity = sum(sentiments) / len(sentiments)
+            overall_sentiment = 'positive' if avg_polarity > 0.1 else 'negative' if avg_polarity < -0.1 else 'neutral'
+        else:
+            avg_polarity = 0.0
+            overall_sentiment = 'neutral'
+        
+        return {
+            'articles': processed_articles,
+            'sentiment_summary': {
+                'polarity': round(avg_polarity, 3),
+                'subjectivity': 0.5,  # Average subjectivity
+                'sentiment': overall_sentiment,
+                'article_count': len(processed_articles)
+            }
+        }
+        
+    except requests.exceptions.RequestException as e:
+        return {
+            'error': f'Network error: {str(e)}',
+            'articles': [],
+            'sentiment_summary': {'polarity': 0.0, 'subjectivity': 0.0, 'sentiment': 'neutral'}
+        }
+    except Exception as e:
+        return {
+            'error': f'Error fetching news: {str(e)}',
+            'articles': [],
+            'sentiment_summary': {'polarity': 0.0, 'subjectivity': 0.0, 'sentiment': 'neutral'}
+        }
+
+def get_stock_sentiment(ticker):
+    """Get comprehensive sentiment analysis for a stock"""
+    try:
+        # Fetch news sentiment
+        news_data = fetch_news_sentiment(ticker)
+        
+        # Get stock info for context
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        # Calculate sentiment score based on news and technical indicators
+        sentiment_score = 0.0
+        sentiment_factors = []
+        
+        # News sentiment factor (40% weight)
+        if 'sentiment_summary' in news_data and 'polarity' in news_data['sentiment_summary']:
+            news_polarity = news_data['sentiment_summary']['polarity']
+            sentiment_score += news_polarity * 0.4
+            sentiment_factors.append({
+                'factor': 'News Sentiment',
+                'value': news_polarity,
+                'weight': 0.4,
+                'description': f"News sentiment: {news_data['sentiment_summary']['sentiment']}"
+            })
+        
+        # Price momentum factor (30% weight)
+        try:
+            hist = stock.history(period='30d')
+            if not hist.empty:
+                current_price = hist['Close'].iloc[-1]
+                price_30d_ago = hist['Close'].iloc[0]
+                price_momentum = (current_price - price_30d_ago) / price_30d_ago
+                sentiment_score += min(max(price_momentum, -0.5), 0.5) * 0.3
+                sentiment_factors.append({
+                    'factor': 'Price Momentum',
+                    'value': price_momentum,
+                    'weight': 0.3,
+                    'description': f"30-day price change: {price_momentum:.2%}"
+                })
+        except:
+            pass
+        
+        # Volume factor (20% weight)
+        try:
+            if not hist.empty:
+                avg_volume = hist['Volume'].mean()
+                current_volume = hist['Volume'].iloc[-1]
+                volume_ratio = current_volume / avg_volume if avg_volume > 0 else 1.0
+                volume_factor = min(max((volume_ratio - 1) * 0.5, -0.5), 0.5)
+                sentiment_score += volume_factor * 0.2
+                sentiment_factors.append({
+                    'factor': 'Volume',
+                    'value': volume_factor,
+                    'weight': 0.2,
+                    'description': f"Volume ratio: {volume_ratio:.2f}x average"
+                })
+        except:
+            pass
+        
+        # Market cap factor (10% weight)
+        try:
+            market_cap = info.get('marketCap', 0)
+            if market_cap > 0:
+                # Large caps tend to be more stable
+                market_cap_factor = min(market_cap / 1e12, 1.0) * 0.1
+                sentiment_score += market_cap_factor * 0.1
+                sentiment_factors.append({
+                    'factor': 'Market Cap',
+                    'value': market_cap_factor,
+                    'weight': 0.1,
+                    'description': f"Market cap: ${market_cap/1e9:.1f}B"
+                })
+        except:
+            pass
+        
+        # Determine overall sentiment
+        if sentiment_score > 0.2:
+            overall_sentiment = 'bullish'
+        elif sentiment_score < -0.2:
+            overall_sentiment = 'bearish'
+        else:
+            overall_sentiment = 'neutral'
+        
+        return {
+            'ticker': ticker,
+            'overall_sentiment': overall_sentiment,
+            'sentiment_score': round(sentiment_score, 3),
+            'sentiment_factors': sentiment_factors,
+            'news_data': news_data,
+            'stock_info': {
+                'name': info.get('longName', ticker),
+                'sector': info.get('sector', 'Unknown'),
+                'industry': info.get('industry', 'Unknown'),
+                'market_cap': info.get('marketCap', 0),
+                'current_price': info.get('currentPrice', 0)
+            }
+        }
+        
+    except Exception as e:
+        return {
+            'ticker': ticker,
+            'error': f'Error analyzing sentiment: {str(e)}',
+            'overall_sentiment': 'neutral',
+            'sentiment_score': 0.0,
+            'sentiment_factors': [],
+            'news_data': {'articles': [], 'sentiment_summary': {'polarity': 0.0, 'subjectivity': 0.0, 'sentiment': 'neutral'}},
+            'stock_info': {}
+        }
 
 def save_model(model_name='latest_model.pkl'):
     global model_cache
