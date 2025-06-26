@@ -180,137 +180,163 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.trending_up, color: Colors.white),
-                    label: const Text(
-                      'View Top Gainers & Losers',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      textStyle: const TextStyle(fontSize: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    onPressed: () =>
-                        Navigator.pushNamed(context, '/top_gainers'),
+          child: FractionallySizedBox(
+            widthFactor: 0.95,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Card(
+                  elevation: 6,
+                  margin: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ),
-              ),
-              Card(
-                elevation: 6,
-                margin: const EdgeInsets.all(16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: tickerController,
-                        decoration: InputDecoration(
-                          labelText: "Enter Stock Ticker (e.g. AAPL, TSLA)",
-                          errorText: isTickerValid
-                              ? null
-                              : 'Enter a valid ticker',
-                          prefixIcon: const Icon(Icons.search),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: tickerController,
+                          decoration: InputDecoration(
+                            labelText: "Enter Stock Ticker (e.g. AAPL, TSLA)",
+                            errorText: isTickerValid
+                                ? null
+                                : 'Enter a valid ticker',
+                            prefixIcon: const Icon(Icons.search),
+                          ),
+                          onChanged: (_) => setState(() {}),
                         ),
-                        onChanged: (_) => setState(() {}),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ListTile(
-                              title: const Text("Start Date"),
-                              subtitle: Text(
-                                DateFormat('yyyy-MM-dd').format(startDate),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ListTile(
+                                title: const Text("Start Date"),
+                                subtitle: Text(
+                                  DateFormat('yyyy-MM-dd').format(startDate),
+                                ),
+                                leading: const Icon(Icons.calendar_today),
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: startDate,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime.now(),
+                                  );
+                                  if (picked != null)
+                                    setState(() => startDate = picked);
+                                },
                               ),
-                              leading: const Icon(Icons.calendar_today),
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: startDate,
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (picked != null)
-                                  setState(() => startDate = picked);
-                              },
+                            ),
+                            Expanded(
+                              child: ListTile(
+                                title: const Text("End Date"),
+                                subtitle: Text(
+                                  DateFormat('yyyy-MM-dd').format(endDate),
+                                ),
+                                leading: const Icon(Icons.calendar_today),
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: endDate,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime.now(),
+                                  );
+                                  if (picked != null)
+                                    setState(() => endDate = picked);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!isDateRangeValid)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 4),
+                            child: Text(
+                              'End date must be after start date',
+                              style: TextStyle(color: Colors.red),
                             ),
                           ),
-                          Expanded(
-                            child: ListTile(
-                              title: const Text("End Date"),
-                              subtitle: Text(
-                                DateFormat('yyyy-MM-dd').format(endDate),
-                              ),
-                              leading: const Icon(Icons.calendar_today),
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: endDate,
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (picked != null)
-                                  setState(() => endDate = picked);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (!isDateRangeValid)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 4),
-                          child: Text(
-                            'End date must be after start date',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-                      ListTile(
-                        title: const Text('Features'),
-                        subtitle: Text(
-                          selectedFeatures
-                              .map((f) => featureLabels[f] ?? f)
-                              .join(', '),
-                        ),
-                        leading: const Icon(Icons.settings),
-                        trailing: ElevatedButton.icon(
-                          icon: const Icon(Icons.edit),
-                          label: const Text('Edit'),
-                          onPressed: showFeatureSelector,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      if (errorMsg != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            errorMsg!,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      Row(
-                        children: [
-                          Expanded(
+                        const SizedBox(height: 20),
+                        ListTile(
+                          title: const Text('Features'),
+                          leading: const Icon(Icons.settings),
+                          trailing: SizedBox(
+                            width: 150,
                             child: ElevatedButton.icon(
-                              icon: const Icon(Icons.analytics),
-                              label: const Text("Predict"),
-                              onPressed: isFormValid ? _onPredictPressed : null,
+                              icon: const Icon(Icons.edit),
+                              label: const Text('Edit'),
+                              onPressed: showFeatureSelector,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        if (errorMsg != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              errorMsg!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.analytics),
+                                label: const Text("Predict"),
+                                onPressed: isFormValid
+                                    ? _onPredictPressed
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  textStyle: const TextStyle(fontSize: 18),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.star),
+                              label: const Text("Save Favorite"),
+                              onPressed: isFormValid
+                                  ? saveCurrentAsFavorite
+                                  : null,
                               style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.amber[700],
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                textStyle: const TextStyle(fontSize: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: const Icon(
+                                Icons.analytics,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                'Backtest Strategy',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.indigo[700],
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
                                 ),
@@ -319,178 +345,178 @@ class _HomePageState extends State<HomePage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
+                              onPressed: isFormValid
+                                  ? () async {
+                                      String? modelName;
+                                      final prefs =
+                                          await SharedPreferences.getInstance();
+                                      modelName = prefs.getString(
+                                        'current_model_name',
+                                      );
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/backtest',
+                                        arguments: {
+                                          'ticker': tickerController.text
+                                              .trim()
+                                              .toUpperCase(),
+                                          'start': startDate.toIso8601String(),
+                                          'end': endDate.toIso8601String(),
+                                          'features': selectedFeatures,
+                                          if (modelName != null)
+                                            'model_name': modelName,
+                                        },
+                                      );
+                                    }
+                                  : null,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.star),
-                            label: const Text("Save Favorite"),
-                            onPressed: isFormValid
-                                ? saveCurrentAsFavorite
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber[700],
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              textStyle: const TextStyle(fontSize: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 16.0,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.pie_chart),
+                          label: const Text('Portfolio Optimizer'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/portfolio'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo[700],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            textStyle: const TextStyle(fontSize: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            icon: const Icon(
-                              Icons.analytics,
-                              color: Colors.white,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.psychology),
+                          label: const Text('Sentiment Analysis'),
+                          onPressed: () =>
+                              Navigator.pushNamed(context, '/sentiment'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.teal[700],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            textStyle: const TextStyle(fontSize: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            label: const Text(
-                              'Backtest Strategy',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.indigo[700],
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              textStyle: const TextStyle(fontSize: 18),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: isFormValid
-                                ? () async {
-                                    String? modelName;
-                                    final prefs =
-                                        await SharedPreferences.getInstance();
-                                    modelName = prefs.getString(
-                                      'current_model_name',
-                                    );
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/backtest',
-                                      arguments: {
-                                        'ticker': tickerController.text
-                                            .trim()
-                                            .toUpperCase(),
-                                        'start': startDate.toIso8601String(),
-                                        'end': endDate.toIso8601String(),
-                                        'features': selectedFeatures,
-                                        if (modelName != null)
-                                          'model_name': modelName,
-                                      },
-                                    );
-                                  }
-                                : null,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Favorites',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Colors.indigo[900],
-                    ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8.0,
+                    horizontal: 16.0,
                   ),
-                ),
-              ),
-              Card(
-                elevation: 2,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: isLoadingFavorites
-                    ? const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: CircularProgressIndicator()),
-                      )
-                    : favorites.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Center(child: Text('No favorites yet.')),
-                      )
-                    : ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: favorites.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final fav = favorites[index];
-                          return ListTile(
-                            title: Text(
-                              fav['ticker'] ?? '',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              '${fav['start']?.substring(0, 10) ?? ''} to ${fav['end']?.substring(0, 10) ?? ''}\n' +
-                                  (fav['features'] as List<dynamic>)
-                                      .map((f) => featureLabels[f] ?? f)
-                                      .join(', '),
-                            ),
-                            isThreeLine: true,
-                            leading: const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => deleteFavorite(index),
-                              tooltip: 'Delete',
-                            ),
-                            onTap: () => loadFavorite(fav),
-                          );
-                        },
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.trending_up, color: Colors.white),
+                      label: const Text(
+                        'View Top Gainers & Losers',
+                        style: TextStyle(color: Colors.white),
                       ),
-              ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.pie_chart),
-                  label: const Text('Portfolio Optimizer'),
-                  onPressed: () => Navigator.pushNamed(context, '/portfolio'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[700],
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        textStyle: const TextStyle(fontSize: 18),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/top_gainers'),
                     ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.psychology),
-                  label: const Text('Sentiment Analysis'),
-                  onPressed: () => Navigator.pushNamed(context, '/sentiment'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal[700],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    textStyle: const TextStyle(fontSize: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Favorites',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.indigo[900],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: isLoadingFavorites
+                      ? const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : favorites.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(child: Text('No favorites yet.')),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: favorites.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final fav = favorites[index];
+                            return ListTile(
+                              title: Text(
+                                fav['ticker'] ?? '',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              subtitle: Text(
+                                '${fav['start']?.substring(0, 10) ?? ''} to ${fav['end']?.substring(0, 10) ?? ''}\n' +
+                                    (fav['features'] as List<dynamic>)
+                                        .map((f) => featureLabels[f] ?? f)
+                                        .join(', '),
+                              ),
+                              isThreeLine: true,
+                              leading: const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () => deleteFavorite(index),
+                                tooltip: 'Delete',
+                              ),
+                              onTap: () => loadFavorite(fav),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
