@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../api_service.dart';
 import '../constants.dart';
+import 'dart:async';
 
 class BacktestPage extends StatefulWidget {
   const BacktestPage({super.key});
@@ -60,6 +61,11 @@ class _BacktestPageState extends State<BacktestPage> {
           isLoading = false;
         });
       }
+    } on TimeoutException {
+      setState(() {
+        errorMsg = 'Request timed out. The backend took too long to respond.';
+        isLoading = false;
+      });
     } catch (e) {
       String msg = e.toString();
       // Try to extract backend error message if present
@@ -304,25 +310,34 @@ class _BacktestSummary extends StatelessWidget {
       color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _SummaryStat(
-              label: 'Strategy Return',
-              value: '${summary['strategy_return']}%',
-            ),
-            _SummaryStat(
-              label: 'Market Return',
-              value: '${summary['market_return']}%',
-            ),
-            _SummaryStat(label: 'Sharpe', value: summary['sharpe'].toString()),
-            _SummaryStat(label: 'Trades', value: summary['trades'].toString()),
-            _SummaryStat(label: 'Win Rate', value: '${summary['win_rate']}%'),
-            _SummaryStat(
-              label: 'Max Drawdown',
-              value: '${summary['max_drawdown']}%',
-            ),
-          ],
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _SummaryStat(
+                label: 'Strategy Return',
+                value: '${summary['strategy_return']}%',
+              ),
+              _SummaryStat(
+                label: 'Market Return',
+                value: '${summary['market_return']}%',
+              ),
+              _SummaryStat(
+                label: 'Sharpe',
+                value: summary['sharpe'].toString(),
+              ),
+              _SummaryStat(
+                label: 'Trades',
+                value: summary['trades'].toString(),
+              ),
+              _SummaryStat(label: 'Win Rate', value: '${summary['win_rate']}%'),
+              _SummaryStat(
+                label: 'Max Drawdown',
+                value: '${summary['max_drawdown']}%',
+              ),
+            ],
+          ),
         ),
       ),
     );

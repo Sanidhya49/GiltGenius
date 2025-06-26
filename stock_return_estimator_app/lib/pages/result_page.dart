@@ -3,6 +3,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
+import '../constants.dart';
+import 'dart:async';
 
 class ResultPage extends StatefulWidget {
   const ResultPage({super.key});
@@ -55,16 +57,18 @@ class _ResultPageState extends State<ResultPage> {
       errorMsg = null;
     });
     try {
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/predict'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'ticker': ticker,
-          'start': start,
-          'end': end,
-          'features': features,
-        }),
-      );
+      final response = await http
+          .post(
+            Uri.parse(backendUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'ticker': ticker,
+              'start': start,
+              'end': end,
+              'features': features,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         if (data['status'] == 'success') {
@@ -96,13 +100,18 @@ class _ResultPageState extends State<ResultPage> {
         }
       } else {
         setState(() {
-          errorMsg = 'Server error: ${response.statusCode}';
+          errorMsg = 'Server error: \\${response.statusCode}';
           isLoading = false;
         });
       }
+    } on TimeoutException {
+      setState(() {
+        errorMsg = 'Request timed out. The backend took too long to respond.';
+        isLoading = false;
+      });
     } catch (e) {
       setState(() {
-        errorMsg = 'Failed to connect to backend.\n$e';
+        errorMsg = 'Failed to connect to backend.\\n$e';
         isLoading = false;
       });
     }
@@ -413,7 +422,7 @@ class _ResultPageState extends State<ResultPage> {
     final modelName = name.endsWith('.pkl') ? name : '$name.pkl';
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:5000/save_model'),
+        Uri.parse(backendUrl.replaceAll('/predict', '/save_model')),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'model_name': modelName}),
       );

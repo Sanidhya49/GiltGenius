@@ -1,4 +1,4 @@
-const String backendUrl = 'http://127.0.0.1:5000/predict';
+const String backendUrl = 'http://10.0.2.2:5000/predict';
 
 const List<String> allFeatures = [
   'Return_Lag_1',
