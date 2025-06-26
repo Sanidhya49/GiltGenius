@@ -6,6 +6,7 @@ import joblib
 import os
 import shap
 import math
+from pypfopt import EfficientFrontier, risk_models, expected_returns
 
 MODEL_DIR = 'models'
 LATEST_MODEL = os.path.join(MODEL_DIR, 'latest_model.pkl')
@@ -286,3 +287,72 @@ def run_backtest(ticker, start, end, features=None, model_name=None, threshold=0
         'holding_period': holding_period,
         'allow_short': allow_short
     }
+
+def optimize_portfolio(tickers, quantities, risk_free_rate=0.02):
+    import yfinance as yf
+    import numpy as np
+    import pandas as pd
+    if not tickers or not quantities or len(tickers) != len(quantities):
+        raise ValueError('Tickers and quantities must be provided and have the same length.')
+    # Download historical price data
+    prices = yf.download(tickers, period='1y')
+    if prices.empty:
+        raise ValueError('No price data found for the given tickers and period.')
+    dropped = []
+    adj_close_frames = []
+    if isinstance(prices.columns, pd.MultiIndex):
+        # Robustly handle both MultiIndex orders
+        for t in tickers:
+            found = False
+            for price_type in ['Adj Close', 'Close']:
+                try:
+                    # Try ('Adj Close', 'IBM')
+                    s = prices[(price_type, t)]
+                    adj_close_frames.append(s.rename(t))
+                    found = True
+                    break
+                except KeyError:
+                    try:
+                        # Try ('IBM', 'Adj Close')
+                        s = prices[(t, price_type)]
+                        adj_close_frames.append(s.rename(t))
+                        found = True
+                        break
+                    except KeyError:
+                        continue
+            if not found:
+                dropped.append(t)
+        if not adj_close_frames:
+            raise ValueError("No valid tickers with 'Adj Close' or 'Close' found in downloaded data.")
+        prices = pd.concat(adj_close_frames, axis=1)
+    else:
+        # Single ticker: try both 'Adj Close' and 'Close'
+        col = None
+        if 'Adj Close' in prices.columns:
+            col = 'Adj Close'
+        elif 'Close' in prices.columns:
+            col = 'Close'
+        if col is None:
+            raise ValueError("'Adj Close' or 'Close' not found in downloaded data.")
+        adj_close = prices[col]
+        if isinstance(adj_close, pd.Series):
+            adj_close = adj_close.to_frame(name=tickers[0])
+        prices = adj_close
+    mu = expected_returns.mean_historical_return(prices)
+    S = risk_models.sample_cov(prices)
+    ef = EfficientFrontier(mu, S)
+    try:
+        weights = ef.max_sharpe(risk_free_rate=risk_free_rate)
+    except ValueError as e:
+        raise ValueError("No asset in your portfolio has an expected return exceeding the risk-free rate. Try lowering the risk-free rate or using different tickers.") from e
+    cleaned_weights = ef.clean_weights()
+    perf = ef.portfolio_performance(verbose=False, risk_free_rate=risk_free_rate)
+    result = {
+        'optimal_weights': cleaned_weights,
+        'expected_return': perf[0],
+        'expected_volatility': perf[1],
+        'sharpe_ratio': perf[2],
+    }
+    if dropped:
+        result['warning'] = f"The following tickers were excluded due to missing data: {', '.join(dropped)}"
+    return result

@@ -110,4 +110,47 @@ class ApiService {
       rethrow;
     }
   }
+
+  static Future<Map<String, dynamic>> optimizePortfolio({
+    required List<String> tickers,
+    required List<double> quantities,
+    double riskFreeRate = 0.02,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(backendUrl.replaceAll('/predict', '/optimize_portfolio')),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'tickers': tickers,
+              'quantities': quantities,
+              'risk_free_rate': riskFreeRate,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          return data['data'];
+        } else {
+          throw Exception(data['message'] ?? 'Portfolio optimization failed');
+        }
+      } else {
+        // Try to parse backend error message for user-facing errors
+        try {
+          final data = jsonDecode(response.body);
+          throw Exception(
+            data['message'] ??
+                'Failed to optimize portfolio: ${response.statusCode}',
+          );
+        } catch (_) {
+          throw Exception(
+            'Failed to optimize portfolio: ${response.statusCode}',
+          );
+        }
+      }
+    } on TimeoutException {
+      rethrow;
+    }
+  }
 }

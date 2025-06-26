@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest
+from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest, optimize_portfolio
 import os
 import requests
 from datetime import datetime, timedelta
@@ -114,6 +114,23 @@ def backtest():
         import traceback
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/optimize_portfolio', methods=['POST'])
+def optimize_portfolio_route():
+    data = request.get_json()
+    tickers = data.get('tickers')
+    quantities = data.get('quantities')
+    risk_free_rate = data.get('risk_free_rate', 0.02)
+    try:
+        result = optimize_portfolio(tickers, quantities, risk_free_rate)
+        return jsonify({'status': 'success', 'data': result})
+    except ValueError as e:
+        # User-facing error (e.g., no asset exceeds risk-free rate)
+        return jsonify({'status': 'error', 'message': str(e)}), 400
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == "__main__":
     if not os.path.exists('models'):

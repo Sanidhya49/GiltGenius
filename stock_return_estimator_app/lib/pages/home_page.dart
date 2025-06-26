@@ -456,6 +456,23 @@ class _HomePageState extends State<HomePage> {
                       ),
               ),
               const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.pie_chart),
+                  label: const Text('Portfolio Optimizer'),
+                  onPressed: () => Navigator.pushNamed(context, '/portfolio'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo[700],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(fontSize: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
