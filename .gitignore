@@ -1,2 +1,58 @@
-/data
-/venv
+# === General ===
+.DS_Store
+*.log
+*.swp
+*.tmp
+*.pyc
+__pycache__/
+
+# === Python/Backend ===
+/venv/
+/data/
+*.sqlite3
+*.db
+*.pkl
+stock_return_estimator_backend/models/*.pkl
+.env
+.env.*
+
+# === Flutter/Dart/Frontend ===
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+**/build/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# Android Studio/IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VSCode
+.vscode/
+
+# === Platform/OS Specific ===
+*.class
+.svn/
+.atom/
+.history
+
+# === App Customization (Protect proprietary theme/assets) ===
+# Uncomment and specify your theme/assets if you want to keep them private
+# stock_return_estimator_app/lib/theme.dart
+# stock_return_estimator_app/assets/
+
+# === Node/Other ===
+node_modules/
+
+# === Exclude model, theme, and sensitive files from all subfolders ===
+*.pkl
+*.key
+*.pem
+*.crt
+*.jks

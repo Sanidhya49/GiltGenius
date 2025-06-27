@@ -1,39 +1,24 @@
 # Stock Return Estimator
 
-A cross-platform (Flutter) app and Python backend for predicting stock returns, visualizing strategies, and exploring technical indicators.
+A cross-platform (Flutter) app and Python backend for predicting stock returns, visualizing strategies, and exploring technical indicators. **Note:** This public repository does not include proprietary model files, custom themes, or production API keys. For demo/educational use only.
 
 ---
 
 ## Features
-- Enter any stock ticker and date range
+- Predict next-day stock returns for any ticker and date range
 - Choose technical indicators (RSI, Bollinger Bands, Moving Averages, etc.)
-- Backend fetches historical data, engineers features, and predicts next-day returns
-- Visualizes cumulative returns and strategy performance
+- Visualize cumulative returns and strategy performance
+- Sentiment analysis from real-time news and technical factors
+- Portfolio optimizer and backtesting tools
 - Works on Android, iOS, Web, and Desktop
 
 ---
 
-## Project Structure
-
-```
-stock-return-estimator/
-├── stock_return_estimator_backend/   # Flask backend (API, ML, feature engineering)
-│   ├── app.py
-│   ├── utils.py
-│   └── requirements.txt
-├── stock_return_estimator_app/       # Flutter frontend (UI, charts, user input)
-│   ├── lib/
-│   ├── pubspec.yaml
-│   └── README.md
-├── ... (other scripts, .gitignore, etc.)
-```
-
----
-
 ## Backend (Flask, Python)
-- **API Endpoint:** `POST /predict`
-  - **Body:** `{ "ticker": "AAPL", "start": "YYYY-MM-DD", "end": "YYYY-MM-DD", "features": ["RSI_14", ...] }`
-  - **Returns:** Predicted return, cumulative returns, strategy stats, features used
+- **API Endpoints:**
+  - `/predict`, `/backtest`, `/optimize_portfolio`, `/sentiment`, `/list_models`, `/save_model`, `/load_model`, `/delete_model`, `/api/top_gainers`, `/api/top_losers`
+- **Swagger/OpenAPI Docs:**
+  - Visit `/apidocs` when running the backend to explore and test all endpoints interactively.
 - **Key dependencies:** See `stock_return_estimator_backend/requirements.txt`
 - **How to run:**
   ```sh
@@ -55,15 +40,41 @@ stock-return-estimator/
   flutter run
   ```
 - **Dependencies:** See `pubspec.yaml` (uses `http`, `fl_chart`, `intl`, etc.)
+- **Web build:**
+  ```sh
+  flutter build web
+  # Deploy build/web/ to Netlify, Vercel, or Firebase Hosting
+  ```
 
 ---
 
-## Development & Contribution
+## Deployment & Updates
+- **Backend:** Deploy to Render, Railway, AWS, or any Python host. Keep your backend running for live data.
+- **Frontend:**
+  - **Web:** Deploy to Netlify, Vercel, or Firebase Hosting
+  - **Mobile:** Build APK and distribute directly or via Play Store (see notes below)
+- **Data & Dates:** The app always fetches the latest stock data and uses the current date by default—no app update required for fresh data.
+
+---
+
+## Security & Privacy
+- **Model files (`*.pkl`), API keys, and custom themes/assets are NOT included in this repository.**
+- See `.gitignore` for all protected files/folders.
+- Do not commit sensitive data or proprietary code.
+
+---
+
+## Screenshots
+> _Add screenshots or a demo video here to showcase the UI and features._
+
+---
+
+## Contribution & License
 - All dependencies are tracked in `requirements.txt` (backend) and `pubspec.yaml` (frontend)
-- The `/venv` and build artifacts are gitignored
 - PRs and issues welcome!
+- **License:** MIT (or add your own)
 
 ---
 
-## License
-MIT (add your license here) 
+## Disclaimer
+**This repository is for demonstration and educational purposes only. The full model, proprietary theme, and production API keys are not included. You may not use this code for commercial purposes without permission.** 
