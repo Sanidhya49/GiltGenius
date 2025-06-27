@@ -445,26 +445,136 @@ class _SettingsPageState extends State<SettingsPage> {
                                             ...filteredModels.map(
                                               (m) => ListTile(
                                                 title: Text(m),
-                                                trailing: ElevatedButton.icon(
-                                                  icon: const Icon(
-                                                    Icons.download,
-                                                  ),
-                                                  label: const Text('Load'),
-                                                  onPressed: () =>
-                                                      _loadModel(m),
-                                                  style: ElevatedButton.styleFrom(
-                                                    backgroundColor:
-                                                        Colors.teal[600],
-                                                    foregroundColor:
-                                                        Colors.white,
-                                                    shape: RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
+                                                trailing: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    ElevatedButton.icon(
+                                                      icon: const Icon(
+                                                        Icons.download,
+                                                      ),
+                                                      label: const Text('Load'),
+                                                      onPressed: () =>
+                                                          _loadModel(m),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.teal[600],
+                                                        foregroundColor:
+                                                            Colors.white,
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                        elevation: 2,
+                                                      ),
                                                     ),
-                                                    elevation: 2,
-                                                  ),
+                                                    const SizedBox(width: 8),
+                                                    ElevatedButton.icon(
+                                                      icon: const Icon(
+                                                        Icons.delete,
+                                                      ),
+                                                      label: const Text(
+                                                        'Delete',
+                                                      ),
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor:
+                                                            Colors.red[700],
+                                                        foregroundColor:
+                                                            Colors.white,
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                12,
+                                                              ),
+                                                        ),
+                                                        elevation: 2,
+                                                      ),
+                                                      onPressed: () async {
+                                                        final confirm = await showDialog<bool>(
+                                                          context: context,
+                                                          builder: (context) => AlertDialog(
+                                                            title: const Text(
+                                                              'Delete Model',
+                                                            ),
+                                                            content: Text(
+                                                              'Are you sure you want to delete model "$m"?',
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                      false,
+                                                                    ),
+                                                                child:
+                                                                    const Text(
+                                                                      'Cancel',
+                                                                    ),
+                                                              ),
+                                                              ElevatedButton(
+                                                                onPressed: () =>
+                                                                    Navigator.pop(
+                                                                      context,
+                                                                      true,
+                                                                    ),
+                                                                style: ElevatedButton.styleFrom(
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .red[700],
+                                                                  foregroundColor:
+                                                                      Colors
+                                                                          .white,
+                                                                ),
+                                                                child:
+                                                                    const Text(
+                                                                      'Delete',
+                                                                    ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        );
+                                                        if (confirm == true) {
+                                                          final response = await http.post(
+                                                            Uri.parse(
+                                                              '${backendUrl.replaceAll('/predict', '')}/delete_model',
+                                                            ),
+                                                            headers: {
+                                                              'Content-Type':
+                                                                  'application/json',
+                                                            },
+                                                            body:
+                                                                '{"model_name": "$m"}',
+                                                          );
+                                                          if (response
+                                                                  .statusCode ==
+                                                              200) {
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(
+                                                                  'Model "$m" deleted',
+                                                                ),
+                                                              ),
+                                                            );
+                                                            _loadModels();
+                                                          } else {
+                                                            ScaffoldMessenger.of(
+                                                              context,
+                                                            ).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(
+                                                                  'Failed to delete model "$m"',
+                                                                ),
+                                                              ),
+                                                            );
+                                                          }
+                                                        }
+                                                      },
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ),

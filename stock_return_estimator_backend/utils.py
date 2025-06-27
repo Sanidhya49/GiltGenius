@@ -586,3 +586,10 @@ def optimize_portfolio(tickers, quantities, risk_free_rate=0.02):
     if dropped:
         result['warning'] = f"The following tickers were excluded due to missing data: {', '.join(dropped)}"
     return result
+
+def delete_model(model_name):
+    path = os.path.join(MODEL_DIR, model_name)
+    if os.path.exists(path):
+        os.remove(path)
+        return True
+    return False

@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest, optimize_portfolio, get_stock_sentiment
+from utils import fetch_and_predict, save_model, load_model, list_models, run_backtest, optimize_portfolio, get_stock_sentiment, delete_model
 import os
 import requests
 from datetime import datetime, timedelta
@@ -143,6 +143,23 @@ def sentiment_analysis():
     try:
         result = get_stock_sentiment(ticker.upper())
         return jsonify({'status': 'success', 'data': result})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/delete_model', methods=['POST'])
+def delete_model_route():
+    data = request.get_json()
+    model_name = data.get('model_name')
+    if not model_name:
+        return jsonify({'status': 'error', 'message': 'Model name required'}), 400
+    try:
+        deleted = delete_model(model_name)
+        if deleted:
+            return jsonify({'status': 'success', 'message': f'Model {model_name} deleted'})
+        else:
+            return jsonify({'status': 'error', 'message': f'Model {model_name} not found'}), 404
     except Exception as e:
         import traceback
         traceback.print_exc()
