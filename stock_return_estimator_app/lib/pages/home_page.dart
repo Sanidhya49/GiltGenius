@@ -234,9 +234,9 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                             shadows: [
                               Shadow(
-                                blurRadius: 18,
+                                blurRadius:2,
                                 color: Colors.blueAccent,
-                                offset: Offset(0, 6),
+                                offset: Offset(0, 1),
                               ),
                             ],
                           ),
