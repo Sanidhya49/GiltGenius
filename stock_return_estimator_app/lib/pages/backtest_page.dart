@@ -89,12 +89,18 @@ class _BacktestPageState extends State<BacktestPage> {
     return Scaffold(
       appBar: AppBar(title: Text('Backtest: $ticker')),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? LinearGradient(
+                  colors: [Color(0xFF181A20), Color(0xFF23242B)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -103,7 +109,7 @@ class _BacktestPageState extends State<BacktestPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Card(
-                  color: Colors.indigo[50],
+                  color: Theme.of(context).cardColor,
                   margin: const EdgeInsets.only(bottom: 12),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -125,9 +131,11 @@ class _BacktestPageState extends State<BacktestPage> {
                                   features
                                       .map((f) => featureLabels[f] ?? f)
                                       .join(', '),
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.black87,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color,
                               ),
                             ),
                           ),
@@ -265,7 +273,8 @@ class _BacktestPageState extends State<BacktestPage> {
                   icon: const Icon(Icons.analytics),
                   label: const Text('Run Backtest'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo[700],
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     textStyle: const TextStyle(fontSize: 18),
                     shape: RoundedRectangleBorder(
@@ -307,7 +316,7 @@ class _BacktestSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final summary = result['summary'] ?? {};
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: SingleChildScrollView(
@@ -350,17 +359,31 @@ class _SummaryStat extends StatelessWidget {
   const _SummaryStat({required this.label, required this.value});
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -373,7 +396,7 @@ class _BacktestChart extends StatelessWidget {
     final market = List<double>.from(result['cumulative_market'] ?? []);
     final strategy = List<double>.from(result['cumulative_strategy'] ?? []);
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -458,7 +481,7 @@ class _BacktestTable extends StatelessWidget {
     final actual = List<double>.from(result['actual_returns'] ?? []);
     final strat = List<double>.from(result['strategy_returns'] ?? []);
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
@@ -469,84 +492,20 @@ class _BacktestTable extends StatelessWidget {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
-            ListView.builder(
-              itemCount: dates.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, i) {
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey[200]!),
-                    ),
-                    color: i % 2 == 0 ? Colors.grey[50] : Colors.white,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 2,
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          child: Text(
-                            dates[i],
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 40,
-                          child: Center(
-                            child: Text(
-                              signals[i] == 1 ? 'Buy' : '-',
-                              style: TextStyle(
-                                color: signals[i] == 1
-                                    ? Colors.green[700]
-                                    : Colors.grey[500],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            pred[i].toStringAsFixed(4),
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            actual[i].toStringAsFixed(4),
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            strat[i].toStringAsFixed(4),
-                            textAlign: TextAlign.right,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 4),
             Row(
-              children: const [
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 SizedBox(
                   width: 80,
-                  child: Text(
-                    'Date',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Center(
+                    child: Text(
+                      'Date',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -554,32 +513,141 @@ class _BacktestTable extends StatelessWidget {
                   child: Center(
                     child: Text(
                       'Signal',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
                 SizedBox(
                   width: 60,
-                  child: Text(
-                    'Pred',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Center(
+                    child: Text(
+                      'Pred',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 SizedBox(
                   width: 60,
-                  child: Text(
-                    'Actual',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Center(
+                    child: Text(
+                      'Actual',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 SizedBox(
                   width: 60,
-                  child: Text(
-                    'Strat',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Center(
+                    child: Text(
+                      'Strat',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 2),
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).colorScheme.surfaceVariant
+                    : Colors.grey[900],
+              ),
+              child: ListView.builder(
+                itemCount: dates.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemBuilder: (context, i) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.surfaceVariant
+                          : (i % 2 == 0 ? Colors.grey[50] : Colors.white),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 2,
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: Text(
+                              dates[i],
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodyMedium?.color,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 40,
+                            child: Center(
+                              child: Text(
+                                signals[i] == 1 ? 'Buy' : '-',
+                                style: TextStyle(
+                                  color: signals[i] == 1
+                                      ? Colors.green[700]
+                                      : Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium?.color,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              pred[i].toStringAsFixed(4),
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              actual[i].toStringAsFixed(4),
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 60,
+                            child: Text(
+                              strat[i].toStringAsFixed(4),
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         ),

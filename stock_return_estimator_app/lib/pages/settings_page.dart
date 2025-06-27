@@ -7,7 +7,8 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  final ValueNotifier<ThemeMode>? themeModeNotifier;
+  const SettingsPage({super.key, this.themeModeNotifier});
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
@@ -179,6 +180,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = widget.themeModeNotifier;
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: isLoading
@@ -189,6 +191,37 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Theme',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        if (themeNotifier != null)
+                          Row(
+                            children: [
+                              const Icon(Icons.light_mode, size: 20),
+                              Switch(
+                                value: themeNotifier.value == ThemeMode.dark,
+                                onChanged: (val) async {
+                                  themeNotifier.value = val
+                                      ? ThemeMode.dark
+                                      : ThemeMode.light;
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+                                  await prefs.setString(
+                                    'theme_mode',
+                                    val ? 'dark' : 'light',
+                                  );
+                                },
+                              ),
+                              const Icon(Icons.dark_mode, size: 20),
+                            ],
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
                     const Text(
                       'Default Date Range',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -238,16 +271,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 24),
                     ListTile(
                       title: const Text('Default Features'),
-                      subtitle: Text(
-                        defaultFeatures
-                            .map((f) => featureLabels[f] ?? f)
-                            .join(', '),
-                      ),
+                      subtitle: null,
                       leading: const Icon(Icons.settings),
                       trailing: ElevatedButton.icon(
                         icon: const Icon(Icons.edit),
                         label: const Text('Edit'),
                         onPressed: showFeatureSelector,
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(80, 36),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

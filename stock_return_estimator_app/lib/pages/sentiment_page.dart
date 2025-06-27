@@ -71,8 +71,8 @@ class _SentimentPageState extends State<SentimentPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('📊 Sentiment Analysis'),
-        backgroundColor: Colors.indigo[700],
-        foregroundColor: Colors.white,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -125,7 +125,7 @@ class _SentimentPageState extends State<SentimentPage> {
             ),
             if (errorMsg != null)
               Card(
-                color: Colors.red[50],
+                color: Theme.of(context).colorScheme.errorContainer,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(

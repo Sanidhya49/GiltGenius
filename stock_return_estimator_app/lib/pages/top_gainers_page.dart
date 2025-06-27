@@ -59,9 +59,12 @@ class _TopGainersPageState extends State<TopGainersPage>
   List<dynamic> _filter(List<dynamic> stocks) {
     if (searchQuery.isEmpty) return stocks;
     return stocks.where((s) {
-      final name = (s['symbol'] ?? s['companyName'] ?? '').toString().toLowerCase();
+      final name = (s['symbol'] ?? s['companyName'] ?? '')
+          .toString()
+          .toLowerCase();
       final company = (s['companyName'] ?? '').toString().toLowerCase();
-      return name.contains(searchQuery.toLowerCase()) || company.contains(searchQuery.toLowerCase());
+      return name.contains(searchQuery.toLowerCase()) ||
+          company.contains(searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -109,7 +112,8 @@ class _TopGainersPageState extends State<TopGainersPage>
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Last updated: ' + DateFormat('yyyy-MM-dd HH:mm').format(lastUpdated!),
+                  'Last updated: ' +
+                      DateFormat('yyyy-MM-dd HH:mm').format(lastUpdated!),
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ),
@@ -118,27 +122,30 @@ class _TopGainersPageState extends State<TopGainersPage>
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : isError
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(errorMsg ?? 'Failed to load data', style: const TextStyle(color: Colors.red)),
-                            const SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Retry'),
-                              onPressed: _fetchData,
-                            ),
-                          ],
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          errorMsg ?? 'Failed to load data',
+                          style: const TextStyle(color: Colors.red),
                         ),
-                      )
-                    : TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildStockList(_filter(gainers), true),
-                          _buildStockList(_filter(losers), false),
-                        ],
-                      ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                          onPressed: _fetchData,
+                        ),
+                      ],
+                    ),
+                  )
+                : TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildStockList(_filter(gainers), true),
+                      _buildStockList(_filter(losers), false),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -166,6 +173,7 @@ class _TopGainersPageState extends State<TopGainersPage>
           final high52 = stock['high52'] ?? '-';
           final low52 = stock['low52'] ?? '-';
           return Card(
+            color: Theme.of(context).cardColor,
             elevation: 2,
             margin: const EdgeInsets.symmetric(vertical: 6),
             child: ListTile(
@@ -241,17 +249,24 @@ class _TopGainersPageState extends State<TopGainersPage>
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: isGainer ? Colors.green[50] : Colors.red[50],
+                    backgroundColor: isGainer
+                        ? Colors.green[50]
+                        : Colors.red[50],
                     child: Text(
                       symbol.toString()[0],
-                      style: TextStyle(color: isGainer ? Colors.green : Colors.red),
+                      style: TextStyle(
+                        color: isGainer ? Colors.green : Colors.red,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       '$company ($symbol)',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
                     ),
                   ),
                 ],
@@ -265,9 +280,17 @@ class _TopGainersPageState extends State<TopGainersPage>
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Icon(isGainer ? Icons.trending_up : Icons.trending_down, color: isGainer ? Colors.green : Colors.red),
+                  Icon(
+                    isGainer ? Icons.trending_up : Icons.trending_down,
+                    color: isGainer ? Colors.green : Colors.red,
+                  ),
                   const SizedBox(width: 8),
-                  Text(isGainer ? 'Gainer' : 'Loser', style: TextStyle(color: isGainer ? Colors.green : Colors.red)),
+                  Text(
+                    isGainer ? 'Gainer' : 'Loser',
+                    style: TextStyle(
+                      color: isGainer ? Colors.green : Colors.red,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -289,4 +312,3 @@ class _TopGainersPageState extends State<TopGainersPage>
     );
   }
 }
- 

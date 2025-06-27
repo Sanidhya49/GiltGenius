@@ -136,12 +136,18 @@ class _ResultPageState extends State<ResultPage> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? LinearGradient(
+                  colors: [Color(0xFF181A20), Color(0xFF23242B)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -181,7 +187,7 @@ class _ResultPageState extends State<ResultPage> {
                           ),
                         ),
                       Card(
-                        color: Colors.indigo[50],
+                        color: Theme.of(context).cardColor,
                         margin: const EdgeInsets.only(bottom: 12),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -206,9 +212,11 @@ class _ResultPageState extends State<ResultPage> {
                                         featuresUsed!
                                             .map((f) => featureLabels[f] ?? f)
                                             .join(', '),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.black87,
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium?.color,
                                     ),
                                   ),
                                 ),
@@ -539,7 +547,9 @@ class _ShapBarChart extends StatelessWidget {
                       Container(
                         height: 18,
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey[800]
+                              : Colors.grey[200],
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),

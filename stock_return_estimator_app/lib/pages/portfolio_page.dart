@@ -118,7 +118,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ),
             if (optimizationResult != null)
               Card(
-                color: Colors.indigo[50],
+                color: Theme.of(context).cardColor,
                 margin: const EdgeInsets.only(bottom: 12),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
