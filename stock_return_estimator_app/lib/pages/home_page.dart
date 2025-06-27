@@ -14,8 +14,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final tickerController = TextEditingController();
-  DateTime startDate = DateTime(2024, 1, 1);
-  DateTime endDate = DateTime(2025, 1, 1);
+  DateTime startDate = DateTime.now().subtract(const Duration(days: 365));
+  DateTime endDate = DateTime.now();
   final List<String> allFeatures = [
     'Return_Lag_1',
     'Return_Lag_5',
@@ -56,16 +56,15 @@ class _HomePageState extends State<HomePage> {
       if (settings['defaultStartDate'] != null) {
         startDate =
             DateTime.tryParse(settings['defaultStartDate']) ??
-            DateTime(2024, 1, 1);
+            DateTime.now().subtract(const Duration(days: 365));
       } else {
-        startDate = DateTime(2024, 1, 1);
+        startDate = DateTime.now().subtract(const Duration(days: 365));
       }
       if (settings['defaultEndDate'] != null) {
         endDate =
-            DateTime.tryParse(settings['defaultEndDate']) ??
-            DateTime(2025, 1, 1);
+            DateTime.tryParse(settings['defaultEndDate']) ?? DateTime.now();
       } else {
-        endDate = DateTime(2025, 1, 1);
+        endDate = DateTime.now();
       }
     });
   }
@@ -92,25 +91,27 @@ class _HomePageState extends State<HomePage> {
         List<String> tempSelected = List.from(selectedFeatures);
         return AlertDialog(
           title: const Text('Select Features'),
-          content: SizedBox(
-            width: 300,
-            child: ListView(
-              shrinkWrap: true,
-              children: allFeatures.map((f) {
-                return CheckboxListTile(
-                  value: tempSelected.contains(f),
-                  title: Text(featureLabels[f] ?? f),
-                  onChanged: (val) {
-                    setState(() {
-                      if (val == true) {
-                        tempSelected.add(f);
-                      } else {
-                        tempSelected.remove(f);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+          content: StatefulBuilder(
+            builder: (context, setState) => SizedBox(
+              width: 300,
+              child: ListView(
+                shrinkWrap: true,
+                children: allFeatures.map((f) {
+                  return CheckboxListTile(
+                    value: tempSelected.contains(f),
+                    title: Text(featureLabels[f] ?? f),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          tempSelected.add(f);
+                        } else {
+                          tempSelected.remove(f);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
             ),
           ),
           actions: [

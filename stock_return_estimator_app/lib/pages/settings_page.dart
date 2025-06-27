@@ -16,8 +16,10 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   late List<String> defaultFeatures;
-  late DateTime defaultStartDate;
-  late DateTime defaultEndDate;
+  late DateTime defaultStartDate = DateTime.now().subtract(
+    const Duration(days: 365),
+  );
+  late DateTime defaultEndDate = DateTime.now();
   bool isLoading = true;
   // Model management
   List<String> models = [];
@@ -57,10 +59,9 @@ class _SettingsPageState extends State<SettingsPage> {
       );
       defaultStartDate =
           DateTime.tryParse(prefs['defaultStartDate'] ?? '') ??
-          DateTime(2024, 1, 1);
+          DateTime.now().subtract(const Duration(days: 365));
       defaultEndDate =
-          DateTime.tryParse(prefs['defaultEndDate'] ?? '') ??
-          DateTime(2025, 1, 1);
+          DateTime.tryParse(prefs['defaultEndDate'] ?? '') ?? DateTime.now();
       isLoading = false;
     });
   }
@@ -83,25 +84,27 @@ class _SettingsPageState extends State<SettingsPage> {
         List<String> tempSelected = List.from(defaultFeatures);
         return AlertDialog(
           title: const Text('Select Default Features'),
-          content: SizedBox(
-            width: 300,
-            child: ListView(
-              shrinkWrap: true,
-              children: allFeatures.map((f) {
-                return CheckboxListTile(
-                  value: tempSelected.contains(f),
-                  title: Text(featureLabels[f] ?? f),
-                  onChanged: (val) {
-                    setState(() {
-                      if (val == true) {
-                        tempSelected.add(f);
-                      } else {
-                        tempSelected.remove(f);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+          content: StatefulBuilder(
+            builder: (context, setState) => SizedBox(
+              width: 300,
+              child: ListView(
+                shrinkWrap: true,
+                children: allFeatures.map((f) {
+                  return CheckboxListTile(
+                    value: tempSelected.contains(f),
+                    title: Text(featureLabels[f] ?? f),
+                    onChanged: (val) {
+                      setState(() {
+                        if (val == true) {
+                          tempSelected.add(f);
+                        } else {
+                          tempSelected.remove(f);
+                        }
+                      });
+                    },
+                  );
+                }).toList(),
+              ),
             ),
           ),
           actions: [
