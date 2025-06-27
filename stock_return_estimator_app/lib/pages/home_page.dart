@@ -14,8 +14,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final tickerController = TextEditingController();
-  DateTime startDate = DateTime(2022, 1, 1);
-  DateTime endDate = DateTime(2024, 1, 1);
+  DateTime startDate = DateTime(2024, 1, 1);
+  DateTime endDate = DateTime(2025, 1, 1);
   final List<String> allFeatures = [
     'Return_Lag_1',
     'Return_Lag_5',
@@ -55,10 +55,17 @@ class _HomePageState extends State<HomePage> {
       }
       if (settings['defaultStartDate'] != null) {
         startDate =
-            DateTime.tryParse(settings['defaultStartDate']) ?? startDate;
+            DateTime.tryParse(settings['defaultStartDate']) ??
+            DateTime(2024, 1, 1);
+      } else {
+        startDate = DateTime(2024, 1, 1);
       }
       if (settings['defaultEndDate'] != null) {
-        endDate = DateTime.tryParse(settings['defaultEndDate']) ?? endDate;
+        endDate =
+            DateTime.tryParse(settings['defaultEndDate']) ??
+            DateTime(2025, 1, 1);
+      } else {
+        endDate = DateTime(2025, 1, 1);
       }
     });
   }
@@ -71,7 +78,9 @@ class _HomePageState extends State<HomePage> {
 
   bool get isTickerValid =>
       tickerController.text.trim().isNotEmpty &&
-      RegExp(r'^[A-Za-z.]+').hasMatch(tickerController.text.trim());
+      RegExp(
+        r'^[A-Z0-9.]+$',
+      ).hasMatch(tickerController.text.trim().toUpperCase());
   bool get isDateRangeValid => !endDate.isBefore(startDate);
   bool get isFormValid =>
       isTickerValid && isDateRangeValid && selectedFeatures.isNotEmpty;
@@ -154,11 +163,18 @@ class _HomePageState extends State<HomePage> {
     String? modelName;
     final prefs = await SharedPreferences.getInstance();
     modelName = prefs.getString('current_model_name');
+    final ticker = tickerController.text.trim().toUpperCase();
+    if (!RegExp(r'^[A-Z0-9.]+$').hasMatch(ticker)) {
+      setState(
+        () => errorMsg = 'Enter a valid ticker (letters, numbers, dot only)',
+      );
+      return;
+    }
     Navigator.pushNamed(
       context,
       '/result',
       arguments: {
-        'ticker': tickerController.text.trim().toUpperCase(),
+        'ticker': ticker,
         'start': startDate.toIso8601String(),
         'end': endDate.toIso8601String(),
         'features': selectedFeatures,

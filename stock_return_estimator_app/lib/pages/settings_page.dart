@@ -57,10 +57,10 @@ class _SettingsPageState extends State<SettingsPage> {
       );
       defaultStartDate =
           DateTime.tryParse(prefs['defaultStartDate'] ?? '') ??
-          DateTime(2022, 1, 1);
+          DateTime(2024, 1, 1);
       defaultEndDate =
           DateTime.tryParse(prefs['defaultEndDate'] ?? '') ??
-          DateTime(2024, 1, 1);
+          DateTime(2025, 1, 1);
       isLoading = false;
     });
   }
@@ -137,10 +137,26 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => isLoadingModels = false);
   }
 
+  // Utility to sanitize model names
+  bool isModelNameValid(String name) {
+    final valid = RegExp(r'^[\w\-.]+\.pkl\$');
+    return valid.hasMatch(name);
+  }
+
   Future<void> _saveModel() async {
     final name = modelNameController.text.trim();
     if (name.isEmpty) return;
     final modelName = name.endsWith('.pkl') ? name : '$name.pkl';
+    if (!isModelNameValid(modelName)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Invalid model name. Use only letters, numbers, dash, underscore, and .pkl extension.',
+          ),
+        ),
+      );
+      return;
+    }
     final response = await http.post(
       Uri.parse('${backendUrl.replaceAll('/predict', '')}/save_model'),
       headers: {'Content-Type': 'application/json'},
@@ -160,6 +176,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadModel(String modelName) async {
+    if (!isModelNameValid(modelName)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid model name.')));
+      return;
+    }
     final response = await http.post(
       Uri.parse('${backendUrl.replaceAll('/predict', '')}/load_model'),
       headers: {'Content-Type': 'application/json'},

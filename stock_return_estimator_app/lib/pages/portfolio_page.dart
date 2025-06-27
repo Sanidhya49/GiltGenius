@@ -21,6 +21,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
     final ticker = tickerController.text.trim().toUpperCase();
     final quantity = double.tryParse(quantityController.text.trim()) ?? 0.0;
     if (ticker.isEmpty || quantity <= 0) return;
+    if (!RegExp(r'^[A-Z0-9.]+$').hasMatch(ticker)) {
+      setState(
+        () => errorMsg = 'Enter a valid ticker (letters, numbers, dot only)',
+      );
+      return;
+    }
     setState(() {
       holdings.add(Holding(ticker: ticker, quantity: quantity));
       tickerController.clear();

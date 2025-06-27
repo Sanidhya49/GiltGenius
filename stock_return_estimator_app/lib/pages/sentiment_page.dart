@@ -21,7 +21,12 @@ class _SentimentPageState extends State<SentimentPage> {
   Future<void> analyzeSentiment() async {
     final ticker = tickerController.text.trim().toUpperCase();
     if (ticker.isEmpty) return;
-
+    if (!RegExp(r'^[A-Z0-9.]+$').hasMatch(ticker)) {
+      setState(
+        () => errorMsg = 'Enter a valid ticker (letters, numbers, dot only)',
+      );
+      return;
+    }
     setState(() {
       isLoading = true;
       errorMsg = null;

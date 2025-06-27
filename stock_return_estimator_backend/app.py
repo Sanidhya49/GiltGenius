@@ -4,9 +4,20 @@ from utils import fetch_and_predict, save_model, load_model, list_models, run_ba
 import os
 import requests
 from datetime import datetime, timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flasgger import Swagger
 
 app = Flask(__name__)
 CORS(app)  # Allow Flutter web/app to access this
+swagger = Swagger(app)
+
+# Add rate limiting: 30 requests per minute per IP
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["30 per minute"]
+)
 
 # Simple in-memory cache for daily updates
 cache = {
@@ -18,6 +29,40 @@ NODE_API_BASE = 'http://localhost:3000/nse'  # Example: replace with your deploy
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """
+    Predict stock returns using the selected model and features.
+    ---
+    tags:
+      - Prediction
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            ticker:
+              type: string
+              example: AAPL
+            start:
+              type: string
+              example: 2024-01-01
+            end:
+              type: string
+              example: 2024-12-31
+            features:
+              type: array
+              items:
+                type: string
+            model_name:
+              type: string
+              example: latest_model.pkl
+    responses:
+      200:
+        description: Prediction result
+      500:
+        description: Error
+    """
     data = request.get_json()
     ticker = data.get("ticker")
     start = data.get("start")
@@ -35,6 +80,27 @@ def predict():
 
 @app.route('/save_model', methods=['POST'])
 def save_model_route():
+    """
+    Save the current model to disk.
+    ---
+    tags:
+      - Model Management
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            model_name:
+              type: string
+              example: my_model.pkl
+    responses:
+      200:
+        description: Model saved
+      500:
+        description: Error
+    """
     data = request.get_json()
     model_name = data.get("model_name", "latest_model.pkl")
     try:
@@ -47,6 +113,27 @@ def save_model_route():
 
 @app.route('/load_model', methods=['POST'])
 def load_model_route():
+    """
+    Load a model from disk.
+    ---
+    tags:
+      - Model Management
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            model_name:
+              type: string
+              example: my_model.pkl
+    responses:
+      200:
+        description: Model loaded
+      500:
+        description: Error
+    """
     data = request.get_json()
     model_name = data.get("model_name", "latest_model.pkl")
     try:
@@ -59,6 +146,17 @@ def load_model_route():
 
 @app.route('/list_models', methods=['GET'])
 def list_models_route():
+    """
+    List all saved models.
+    ---
+    tags:
+      - Model Management
+    responses:
+      200:
+        description: List of models
+      500:
+        description: Error
+    """
     try:
         models = list_models()
         return jsonify({"status": "success", "models": models})
@@ -69,6 +167,17 @@ def list_models_route():
 
 @app.route('/api/top_gainers', methods=['GET'])
 def top_gainers():
+    """
+    Get top gainers from the stock market.
+    ---
+    tags:
+      - Market Data
+    responses:
+      200:
+        description: Top gainers
+      500:
+        description: Error
+    """
     now = datetime.now()
     # Cache for 10 minutes
     if cache['gainers']['data'] and cache['gainers']['timestamp'] and (now - cache['gainers']['timestamp']) < timedelta(minutes=10):
@@ -84,6 +193,17 @@ def top_gainers():
 
 @app.route('/api/top_losers', methods=['GET'])
 def top_losers():
+    """
+    Get top losers from the stock market.
+    ---
+    tags:
+      - Market Data
+    responses:
+      200:
+        description: Top losers
+      500:
+        description: Error
+    """
     now = datetime.now()
     if cache['losers']['data'] and cache['losers']['timestamp'] and (now - cache['losers']['timestamp']) < timedelta(minutes=10):
         return jsonify({'status': 'success', 'data': cache['losers']['data']})
@@ -98,6 +218,49 @@ def top_losers():
 
 @app.route('/backtest', methods=['POST'])
 def backtest():
+    """
+    Run a backtest on the selected strategy and model.
+    ---
+    tags:
+      - Backtest
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            ticker:
+              type: string
+              example: AAPL
+            start:
+              type: string
+              example: 2024-01-01
+            end:
+              type: string
+              example: 2024-12-31
+            features:
+              type: array
+              items:
+                type: string
+            model_name:
+              type: string
+              example: latest_model.pkl
+            threshold:
+              type: number
+              example: 0.0
+            holding_period:
+              type: integer
+              example: 1
+            allow_short:
+              type: boolean
+              example: false
+    responses:
+      200:
+        description: Backtest result
+      500:
+        description: Error
+    """
     data = request.get_json()
     ticker = data.get("ticker")
     start = data.get("start")
@@ -117,6 +280,37 @@ def backtest():
 
 @app.route('/optimize_portfolio', methods=['POST'])
 def optimize_portfolio_route():
+    """
+    Optimize a portfolio for maximum Sharpe ratio.
+    ---
+    tags:
+      - Portfolio
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            tickers:
+              type: array
+              items:
+                type: string
+            quantities:
+              type: array
+              items:
+                type: number
+            risk_free_rate:
+              type: number
+              example: 0.02
+    responses:
+      200:
+        description: Portfolio optimization result
+      400:
+        description: User error
+      500:
+        description: Error
+    """
     data = request.get_json()
     tickers = data.get('tickers')
     quantities = data.get('quantities')
@@ -134,6 +328,29 @@ def optimize_portfolio_route():
 
 @app.route('/sentiment', methods=['POST'])
 def sentiment_analysis():
+    """
+    Get sentiment analysis for a stock ticker.
+    ---
+    tags:
+      - Sentiment
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            ticker:
+              type: string
+              example: AAPL
+    responses:
+      200:
+        description: Sentiment analysis result
+      400:
+        description: Missing ticker
+      500:
+        description: Error
+    """
     data = request.get_json()
     ticker = data.get('ticker')
     
@@ -150,6 +367,31 @@ def sentiment_analysis():
 
 @app.route('/delete_model', methods=['POST'])
 def delete_model_route():
+    """
+    Delete a saved model by name.
+    ---
+    tags:
+      - Model Management
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            model_name:
+              type: string
+              example: my_model.pkl
+    responses:
+      200:
+        description: Model deleted
+      400:
+        description: Missing model name
+      404:
+        description: Model not found
+      500:
+        description: Error
+    """
     data = request.get_json()
     model_name = data.get('model_name')
     if not model_name:
@@ -164,6 +406,11 @@ def delete_model_route():
         import traceback
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# Error handler for rate limit exceeded
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify({'status': 'error', 'message': 'Rate limit exceeded. Please try again later.'}), 429
 
 if __name__ == "__main__":
     if not os.path.exists('models'):
