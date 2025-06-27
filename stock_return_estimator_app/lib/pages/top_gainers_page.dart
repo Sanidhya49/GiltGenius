@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api_service.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui';
 
 class TopGainersPage extends StatefulWidget {
   const TopGainersPage({super.key});
@@ -72,7 +73,24 @@ class _TopGainersPageState extends State<TopGainersPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Top Gainers & Losers (NIFTY 100)'),
+        title: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              colors: [Color(0xFF00C6FB), Color(0xFF005BEA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds);
+          },
+          child: const Text(
+            'Top Gainers & Losers (NIFTY 100)',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -81,73 +99,150 @@ class _TopGainersPageState extends State<TopGainersPage>
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'Search by symbol or name',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
-                      isDense: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? LinearGradient(
+                  colors: [Color(0xFF181A20), Color(0xFF23242B)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+        ),
+        child: Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.98,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480, minHeight: 520),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Card(
+                      color: Theme.of(context).cardColor.withOpacity(0.90),
+                      elevation: 20,
+                      margin: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32),
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.secondary.withOpacity(0.22),
+                          width: 2.0,
+                        ),
+                      ),
+                      shadowColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.22),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      hintText: 'Search by symbol or name',
+                                      prefixIcon: Icon(Icons.search),
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    onChanged: (v) =>
+                                        setState(() => searchQuery = v),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.refresh),
+                                  tooltip: 'Refresh',
+                                  onPressed: isLoading ? null : _fetchData,
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (lastUpdated != null)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                left: 16,
+                                bottom: 4,
+                              ),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  'Last updated: ' +
+                                      DateFormat(
+                                        'yyyy-MM-dd HH:mm',
+                                      ).format(lastUpdated!),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Expanded(
+                            child: isLoading
+                                ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
+                                : isError
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          errorMsg ?? 'Failed to load data',
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                            fontSize: 16,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        ElevatedButton.icon(
+                                          icon: const Icon(Icons.refresh),
+                                          label: const Text('Retry'),
+                                          onPressed: _fetchData,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.indigo[700],
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            elevation: 3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : TabBarView(
+                                    controller: _tabController,
+                                    children: [
+                                      _buildStockList(_filter(gainers), true),
+                                      _buildStockList(_filter(losers), false),
+                                    ],
+                                  ),
+                          ),
+                        ],
+                      ),
                     ),
-                    onChanged: (v) => setState(() => searchQuery = v),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  tooltip: 'Refresh',
-                  onPressed: isLoading ? null : _fetchData,
-                ),
-              ],
-            ),
-          ),
-          if (lastUpdated != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 16, bottom: 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Last updated: ' +
-                      DateFormat('yyyy-MM-dd HH:mm').format(lastUpdated!),
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ),
             ),
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : isError
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          errorMsg ?? 'Failed to load data',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Retry'),
-                          onPressed: _fetchData,
-                        ),
-                      ],
-                    ),
-                  )
-                : TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildStockList(_filter(gainers), true),
-                      _buildStockList(_filter(losers), false),
-                    ],
-                  ),
           ),
-        ],
+        ),
       ),
     );
   }

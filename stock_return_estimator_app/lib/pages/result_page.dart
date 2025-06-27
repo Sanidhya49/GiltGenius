@@ -5,6 +5,8 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
 import '../constants.dart';
 import 'dart:async';
+import 'package:flutter/rendering.dart';
+import 'dart:ui';
 
 class ResultPage extends StatefulWidget {
   const ResultPage({super.key});
@@ -121,7 +123,24 @@ class _ResultPageState extends State<ResultPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Prediction for $ticker"),
+        title: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              colors: [Color(0xFF00C6FB), Color(0xFF005BEA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds);
+          },
+          child: Text(
+            "Prediction for $ticker",
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white, // This will be replaced by the shader
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
@@ -186,123 +205,189 @@ class _ResultPageState extends State<ResultPage> {
                             ],
                           ),
                         ),
-                      Card(
-                        color: Theme.of(context).cardColor,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Ticker: $ticker',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                          child: Card(
+                            color: Theme.of(
+                              context,
+                            ).cardColor.withOpacity(0.82),
+                            elevation: 12,
+                            margin: const EdgeInsets.only(bottom: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(28),
+                              side: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withOpacity(0.18),
+                                width: 1.2,
                               ),
-                              Text(
-                                'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
-                              ),
-                              if (featuresUsed != null &&
-                                  featuresUsed!.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Features: ' +
-                                        featuresUsed!
-                                            .map((f) => featureLabels[f] ?? f)
-                                            .join(', '),
+                            ),
+                            shadowColor: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.18),
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Ticker: $ticker',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
                                     style: TextStyle(
-                                      fontSize: 13,
                                       color: Theme.of(
                                         context,
-                                      ).textTheme.bodyMedium?.color,
+                                      ).colorScheme.secondary,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Card(
-                        elevation: 2,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            children: [
-                              Text(
-                                "Predicted Next-Day Return: " +
-                                    ((predictedReturn ?? 0) * 100)
-                                        .toStringAsFixed(2) +
-                                    "%",
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _StatCard(
-                                    icon: Icons.trending_up,
-                                    label: "Strategy Return",
-                                    value:
-                                        (strategySummary?.toStringAsFixed(2) ??
-                                            '-') +
-                                        "%",
-                                    color: Colors.green[700],
-                                  ),
-                                  _StatCard(
-                                    icon: Icons.show_chart,
-                                    label: "Market Return",
-                                    value:
-                                        (marketSummary?.toStringAsFixed(2) ??
-                                            '-') +
-                                        "%",
-                                    color: Colors.blue[700],
-                                  ),
-                                  _StatCard(
-                                    icon: Icons.balance,
-                                    label: "Sharpe",
-                                    value: (sharpe?.toStringAsFixed(2) ?? '-'),
-                                    color: Colors.deepPurple[700],
-                                  ),
-                                ],
-                              ),
-                              if (shapValues != null &&
-                                  shapValues!.isNotEmpty) ...[
-                                const SizedBox(height: 20),
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Feature Impact (Explainable AI)',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                  if (featuresUsed != null &&
+                                      featuresUsed!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Features: ' +
+                                            featuresUsed!
+                                                .map(
+                                                  (f) => featureLabels[f] ?? f,
+                                                )
+                                                .join(', '),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 6),
-                                    Tooltip(
-                                      message:
-                                          'Shows how much each feature contributed to the prediction. Positive = pushes return up, Negative = down.',
-                                      child: Icon(
-                                        Icons.info_outline,
-                                        size: 18,
-                                        color: Colors.indigo[400],
+                                  const SizedBox(height: 18),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 800),
+                                    curve: Curves.easeInOut,
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    height: 4,
+                                    width: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withOpacity(0.0),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withOpacity(0.5),
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withOpacity(0.0),
+                                        ],
+                                        begin: Alignment.centerLeft,
+                                        end: Alignment.centerRight,
                                       ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withOpacity(0.2),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
+                                  Text(
+                                    "Predicted Next-Day Return: " +
+                                        ((predictedReturn ?? 0) * 100)
+                                            .toStringAsFixed(2) +
+                                        "%",
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _StatCard(
+                                        icon: Icons.trending_up,
+                                        label: "Strategy Return",
+                                        value:
+                                            (strategySummary?.toStringAsFixed(
+                                                  2,
+                                                ) ??
+                                                '-') +
+                                            "%",
+                                        color: Colors.green[700],
+                                      ),
+                                      _StatCard(
+                                        icon: Icons.show_chart,
+                                        label: "Market Return",
+                                        value:
+                                            (marketSummary?.toStringAsFixed(
+                                                  2,
+                                                ) ??
+                                                '-') +
+                                            "%",
+                                        color: Colors.blue[700],
+                                      ),
+                                      _StatCard(
+                                        icon: Icons.balance,
+                                        label: "Sharpe",
+                                        value:
+                                            (sharpe?.toStringAsFixed(2) ?? '-'),
+                                        color: Colors.deepPurple[700],
+                                      ),
+                                    ],
+                                  ),
+                                  if (shapValues != null &&
+                                      shapValues!.isNotEmpty) ...[
+                                    const SizedBox(height: 20),
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          'Feature Impact (Explainable AI)',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Tooltip(
+                                          message:
+                                              'Shows how much each feature contributed to the prediction. Positive = pushes return up, Negative = down.',
+                                          child: Icon(
+                                            Icons.info_outline,
+                                            size: 18,
+                                            color: Colors.indigo[400],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    _ShapBarChart(
+                                      shapValues: shapValues!,
+                                      featureLabels: featureLabels,
                                     ),
                                   ],
-                                ),
-                                const SizedBox(height: 10),
-                                _ShapBarChart(
-                                  shapValues: shapValues!,
-                                  featureLabels: featureLabels,
-                                ),
-                              ],
-                            ],
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -369,6 +454,17 @@ class _ResultPageState extends State<ResultPage> {
                           icon: const Icon(Icons.arrow_back),
                           label: const Text("Back"),
                           onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.secondary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
                         ),
                       ),
                     ],

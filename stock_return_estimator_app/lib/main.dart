@@ -80,7 +80,7 @@ class MyApp extends StatelessWidget {
             '/result': (context) => const ResultPage(),
             '/settings': (context) =>
                 SettingsPage(themeModeNotifier: themeModeNotifier),
-            '/top_gainers': (context) => const TopGainersPage(),
+            '/topgainers': (context) => const TopGainersPage(),
             '/backtest': (context) => const BacktestPage(),
             '/portfolio': (context) => const PortfolioPage(),
             '/sentiment': (context) => const SentimentPage(),

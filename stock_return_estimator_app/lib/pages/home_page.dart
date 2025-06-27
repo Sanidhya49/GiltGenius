@@ -198,7 +198,10 @@ class _HomePageState extends State<HomePage> {
                           return LinearGradient(
                             colors: isDark
                                 ? [Color(0xFF00C6FB), Color(0xFF005BEA)]
-                                : [Color(0xFF232526), Color(0xFF414345)],
+                                : [
+                                    Theme.of(context).colorScheme.primary,
+                                    Theme.of(context).colorScheme.secondary,
+                                  ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ).createShader(bounds);
@@ -213,24 +216,58 @@ class _HomePageState extends State<HomePage> {
                             color: Colors.white,
                             shadows: [
                               Shadow(
-                                blurRadius: 12,
-                                color: Colors.black54,
-                                offset: Offset(0, 4),
+                                blurRadius: 18,
+                                color: Colors.blueAccent,
+                                offset: Offset(0, 6),
                               ),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(
-                        'Luxury Returns. Smart Decisions.',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.secondary,
-                          letterSpacing: 1.1,
-                        ),
-                        textAlign: TextAlign.center,
+                      // Text(
+                      //   'Luxury Returns. Smart Decisions.',
+                      //   style: TextStyle(
+                      //     fontSize: 16,
+                      //     fontWeight: FontWeight.w500,
+                      //     color: Theme.of(context).colorScheme.secondary,
+                      //     letterSpacing: 1.1,
+                      //   ),
+                      //   textAlign: TextAlign.center,
+                      // ),
+                    ],
+                  ),
+                ),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 800),
+                  curve: Curves.easeInOut,
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  height: 4,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.0),
+                        Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.5),
+                        Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.0),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.2),
+                        blurRadius: 8,
+                        spreadRadius: 1,
                       ),
                     ],
                   ),
@@ -333,92 +370,112 @@ class _HomePageState extends State<HomePage> {
                                   onChanged: (_) => setState(() {}),
                                 ),
                                 const SizedBox(height: 18),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: ListTile(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                        ),
-                                        tileColor:
-                                            Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.white10
-                                            : Colors.grey[100],
-                                        title: const Text(
-                                          "Start Date",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          DateFormat(
-                                            'yyyy-MM-dd',
-                                          ).format(startDate),
-                                        ),
-                                        leading: Icon(
-                                          Icons.calendar_today,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.secondary,
-                                        ),
-                                        onTap: () async {
-                                          final picked = await showDatePicker(
-                                            context: context,
-                                            initialDate: startDate,
-                                            firstDate: DateTime(2000),
-                                            lastDate: DateTime.now(),
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    // If width is less than 400, stack vertically
+                                    final isNarrow = constraints.maxWidth < 400;
+                                    return isNarrow
+                                        ? Column(
+                                            children: [
+                                              _buildDatePill(
+                                                context,
+                                                label: 'Start Date',
+                                                date: startDate,
+                                                onTap: () async {
+                                                  final picked =
+                                                      await showDatePicker(
+                                                        context: context,
+                                                        initialDate: startDate,
+                                                        firstDate: DateTime(
+                                                          2000,
+                                                        ),
+                                                        lastDate:
+                                                            DateTime.now(),
+                                                      );
+                                                  if (picked != null)
+                                                    setState(
+                                                      () => startDate = picked,
+                                                    );
+                                                },
+                                              ),
+                                              const SizedBox(height: 8),
+                                              _buildDatePill(
+                                                context,
+                                                label: 'End Date',
+                                                date: endDate,
+                                                onTap: () async {
+                                                  final picked =
+                                                      await showDatePicker(
+                                                        context: context,
+                                                        initialDate: endDate,
+                                                        firstDate: DateTime(
+                                                          2000,
+                                                        ),
+                                                        lastDate:
+                                                            DateTime.now(),
+                                                      );
+                                                  if (picked != null)
+                                                    setState(
+                                                      () => endDate = picked,
+                                                    );
+                                                },
+                                              ),
+                                            ],
+                                          )
+                                        : Row(
+                                            children: [
+                                              Expanded(
+                                                child: _buildDatePill(
+                                                  context,
+                                                  label: 'Start Date',
+                                                  date: startDate,
+                                                  onTap: () async {
+                                                    final picked =
+                                                        await showDatePicker(
+                                                          context: context,
+                                                          initialDate:
+                                                              startDate,
+                                                          firstDate: DateTime(
+                                                            2000,
+                                                          ),
+                                                          lastDate:
+                                                              DateTime.now(),
+                                                        );
+                                                    if (picked != null)
+                                                      setState(
+                                                        () =>
+                                                            startDate = picked,
+                                                      );
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: _buildDatePill(
+                                                  context,
+                                                  label: 'End Date',
+                                                  date: endDate,
+                                                  onTap: () async {
+                                                    final picked =
+                                                        await showDatePicker(
+                                                          context: context,
+                                                          initialDate: endDate,
+                                                          firstDate: DateTime(
+                                                            2000,
+                                                          ),
+                                                          lastDate:
+                                                              DateTime.now(),
+                                                        );
+                                                    if (picked != null)
+                                                      setState(
+                                                        () => endDate = picked,
+                                                      );
+                                                  },
+                                                ),
+                                              ),
+                                            ],
                                           );
-                                          if (picked != null)
-                                            setState(() => startDate = picked);
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: ListTile(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            14,
-                                          ),
-                                        ),
-                                        tileColor:
-                                            Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors.white10
-                                            : Colors.grey[100],
-                                        title: const Text(
-                                          "End Date",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        subtitle: Text(
-                                          DateFormat(
-                                            'yyyy-MM-dd',
-                                          ).format(endDate),
-                                        ),
-                                        leading: Icon(
-                                          Icons.calendar_today,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.secondary,
-                                        ),
-                                        onTap: () async {
-                                          final picked = await showDatePicker(
-                                            context: context,
-                                            initialDate: endDate,
-                                            firstDate: DateTime(2000),
-                                            lastDate: DateTime.now(),
-                                          );
-                                          if (picked != null)
-                                            setState(() => endDate = picked);
-                                        },
-                                      ),
-                                    ),
-                                  ],
+                                  },
                                 ),
                                 if (!isDateRangeValid)
                                   const Padding(
@@ -429,46 +486,72 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                 const SizedBox(height: 18),
-                                ListTile(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
+                                Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 8,
                                   ),
-                                  tileColor:
-                                      Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white10
-                                      : Colors.grey[100],
-                                  title: const Text(
-                                    'Features',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white10
+                                        : Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.secondary.withOpacity(0.13),
+                                      width: 1.0,
                                     ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondary
+                                            .withOpacity(0.06),
+                                        blurRadius: 6,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
-                                  leading: Icon(
-                                    Icons.settings,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondary,
-                                  ),
-                                  trailing: SizedBox(
-                                    width: 120,
-                                    child: ElevatedButton.icon(
-                                      icon: const Icon(Icons.edit),
-                                      label: const Text('Edit'),
-                                      onPressed: showFeatureSelector,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.settings,
+                                        color: Theme.of(
                                           context,
                                         ).colorScheme.secondary,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        elevation: 2,
                                       ),
-                                    ),
+                                      const SizedBox(width: 10),
+                                      const Text(
+                                        'Features',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.edit, size: 18),
+                                        label: const Text('Edit'),
+                                        onPressed: showFeatureSelector,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                          foregroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          elevation: 2,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 24),
@@ -669,6 +752,110 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 54,
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(
+                                            Icons.auto_graph,
+                                            color: Colors.white,
+                                            size: 22,
+                                          ),
+                                          label: const FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'Portfolio Optimizer',
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.indigo[700],
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            elevation: 3,
+                                          ),
+                                          onPressed: () => Navigator.pushNamed(
+                                            context,
+                                            '/portfolio',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: SizedBox(
+                                        height: 54,
+                                        child: ElevatedButton.icon(
+                                          icon: const Icon(
+                                            Icons.psychology,
+                                            color: Colors.white,
+                                            size: 22,
+                                          ),
+                                          label: const FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'Sentiment Analysis',
+                                              style: TextStyle(fontSize: 16),
+                                            ),
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.teal[600],
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            elevation: 3,
+                                          ),
+                                          onPressed: () => Navigator.pushNamed(
+                                            context,
+                                            '/sentiment',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 54,
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(
+                                      Icons.leaderboard,
+                                      color: Colors.white,
+                                      size: 24,
+                                    ),
+                                    label: const Text(
+                                      'View Top Gainers & Losers',
+                                      style: TextStyle(fontSize: 17),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green[700],
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 3,
+                                    ),
+                                    onPressed: () => Navigator.pushNamed(
+                                      context,
+                                      '/topgainers',
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -782,8 +969,64 @@ class _HomePageState extends State<HomePage> {
                           ),
                   ),
                 ),
+                const SizedBox(height: 32),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePill(
+    BuildContext context, {
+    required String label,
+    required DateTime date,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(32),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        margin: const EdgeInsets.symmetric(vertical: 2),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white10
+              : Colors.grey[100],
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.08),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: Theme.of(context).colorScheme.secondary.withOpacity(0.18),
+            width: 1.1,
+          ),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                '$label: ',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              Text(
+                DateFormat('yyyy-MM-dd').format(date),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
           ),
         ),
       ),

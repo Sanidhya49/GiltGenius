@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../api_service.dart';
 import '../constants.dart';
 import 'dart:async';
+import 'dart:ui';
 
 class BacktestPage extends StatefulWidget {
   const BacktestPage({super.key});
@@ -87,7 +88,26 @@ class _BacktestPageState extends State<BacktestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Backtest: $ticker')),
+      appBar: AppBar(
+        title: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              colors: [Color(0xFF00C6FB), Color(0xFF005BEA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds);
+          },
+          child: Text(
+            "Backtest: $ticker",
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white, // This will be replaced by the shader
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: Theme.of(context).brightness == Brightness.dark
@@ -108,178 +128,216 @@ class _BacktestPageState extends State<BacktestPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Card(
-                  color: Theme.of(context).cardColor,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Ticker: $ticker',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Card(
+                      color: Theme.of(context).cardColor.withOpacity(0.82),
+                      elevation: 12,
+                      margin: const EdgeInsets.only(bottom: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.secondary.withOpacity(0.18),
+                          width: 1.2,
                         ),
-                        Text(
-                          'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
-                        ),
-                        if (features.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              'Features: ' +
-                                  features
-                                      .map((f) => featureLabels[f] ?? f)
-                                      .join(', '),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(
-                                  context,
-                                ).textTheme.bodyMedium?.color,
-                              ),
-                            ),
-                          ),
-                        if (modelName != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              'Model: $modelName',
+                      ),
+                      shadowColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.18),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ticker: $ticker',
                               style: const TextStyle(
-                                fontSize: 13,
-                                color: Colors.indigo,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        const Text(
-                          'Threshold:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(width: 4),
-                        Tooltip(
-                          message:
-                              'The minimum predicted return (%) required to trigger a Buy.\n\n' +
-                              '• If the model predicts a return above this value, the strategy buys.\n' +
-                              '• Lower threshold = more trades, higher = fewer, more selective trades.\n' +
-                              '• Example: 0.01 = 1% predicted return. Most daily returns are between -5% and +5%.',
-                          child: Icon(
-                            Icons.info_outline,
-                            size: 18,
-                            color: Colors.indigo[400],
-                          ),
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: threshold,
-                            min: -0.05,
-                            max: 0.05,
-                            divisions: 20,
-                            label: threshold.toStringAsFixed(3),
-                            onChanged: (v) => setState(() => threshold = v),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 60,
-                          child: Text(
-                            threshold.toStringAsFixed(3),
-                            textAlign: TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'Holding Period:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 4),
-                            Tooltip(
-                              message:
-                                  'How many days to hold after a Buy signal.\n\n' +
-                                  'E.g., 1 = sell next day, 3 = hold for 3 days after buying.',
-                              child: Icon(
-                                Icons.info_outline,
-                                size: 18,
-                                color: Colors.indigo[400],
+                            Text(
+                              'Date Range: ${start.substring(0, 10)} to ${end.substring(0, 10)}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            Expanded(
-                              child: Slider(
-                                value: holdingPeriod.toDouble(),
-                                min: 1,
-                                max: 10,
-                                divisions: 9,
-                                label: holdingPeriod.toString(),
-                                onChanged: (v) =>
-                                    setState(() => holdingPeriod = v.round()),
+                            if (features.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'Features: ' +
+                                      features
+                                          .map((f) => featureLabels[f] ?? f)
+                                          .join(', '),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 18),
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 800),
+                              curve: Curves.easeInOut,
+                              margin: const EdgeInsets.symmetric(vertical: 10),
+                              height: 4,
+                              width: 120,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.secondary.withOpacity(0.0),
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.secondary.withOpacity(0.5),
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.secondary.withOpacity(0.0),
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary.withOpacity(0.2),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
                               ),
                             ),
-                            SizedBox(
-                              width: 40,
-                              child: Text(
-                                '$holdingPeriod d',
-                                textAlign: TextAlign.right,
-                              ),
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Threshold:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(width: 4),
+                                Tooltip(
+                                  message:
+                                      'The minimum predicted return (%) required to trigger a Buy.\n\n' +
+                                      '\u2022 If the model predicts a return above this value, the strategy buys.\n' +
+                                      '\u2022 Lower threshold = more trades, higher = fewer, more selective trades.\n' +
+                                      '\u2022 Example: 0.01 = 1% predicted return. Most daily returns are between -5% and +5%.',
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 18,
+                                    color: Colors.indigo[400],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Slider(
+                                    value: threshold,
+                                    min: -0.05,
+                                    max: 0.05,
+                                    divisions: 20,
+                                    label: threshold.toStringAsFixed(3),
+                                    onChanged: (v) =>
+                                        setState(() => threshold = v),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 60,
+                                  child: Text(
+                                    threshold.toStringAsFixed(3),
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Holding Period:',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(width: 4),
+                                Tooltip(
+                                  message:
+                                      'How many days to hold after a Buy signal.\n\n' +
+                                      'E.g., 1 = sell next day, 3 = hold for 3 days after buying.',
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 18,
+                                    color: Colors.indigo[400],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Slider(
+                                    value: holdingPeriod.toDouble(),
+                                    min: 1,
+                                    max: 10,
+                                    divisions: 9,
+                                    label: holdingPeriod.toString(),
+                                    onChanged: (v) => setState(
+                                      () => holdingPeriod = v.round(),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  width: 40,
+                                  child: Text(
+                                    '$holdingPeriod d',
+                                    textAlign: TextAlign.right,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                const Text(
+                                  'Allow Shorting',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(width: 4),
+                                Tooltip(
+                                  message:
+                                      'If enabled, the strategy will also sell/short when the predicted return is below -threshold.\n\n' +
+                                      'Shorting means profiting from price drops. Use with caution!',
+                                  child: Icon(
+                                    Icons.info_outline,
+                                    size: 18,
+                                    color: Colors.indigo[400],
+                                  ),
+                                ),
+                                Switch(
+                                  value: allowShort,
+                                  onChanged: (v) =>
+                                      setState(() => allowShort = v),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                        Row(
-                          children: [
-                            const Text(
-                              'Allow Shorting',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 4),
-                            Tooltip(
-                              message:
-                                  'If enabled, the strategy will also sell/short when the predicted return is below -threshold.\n\n' +
-                                  'Shorting means profiting from price drops. Use with caution!',
-                              child: Icon(
-                                Icons.info_outline,
-                                size: 18,
-                                color: Colors.indigo[400],
-                              ),
-                            ),
-                            Switch(
-                              value: allowShort,
-                              onChanged: (v) => setState(() => allowShort = v),
-                            ),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(height: 18),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.analytics),
                   label: const Text('Run Backtest'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    textStyle: const TextStyle(fontSize: 18),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    elevation: 2,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   onPressed: isLoading ? null : runBacktest,
                 ),

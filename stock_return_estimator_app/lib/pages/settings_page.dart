@@ -5,6 +5,7 @@ import '../local_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui';
 
 class SettingsPage extends StatefulWidget {
   final ValueNotifier<ThemeMode>? themeModeNotifier;
@@ -182,159 +183,301 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final themeNotifier = widget.themeModeNotifier;
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              colors: [Color(0xFF00C6FB), Color(0xFF005BEA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds);
+          },
+          child: const Text(
+            'Settings',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ),
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Theme',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        if (themeNotifier != null)
-                          Row(
-                            children: [
-                              const Icon(Icons.light_mode, size: 20),
-                              Switch(
-                                value: themeNotifier.value == ThemeMode.dark,
-                                onChanged: (val) async {
-                                  themeNotifier.value = val
-                                      ? ThemeMode.dark
-                                      : ThemeMode.light;
-                                  final prefs =
-                                      await SharedPreferences.getInstance();
-                                  await prefs.setString(
-                                    'theme_mode',
-                                    val ? 'dark' : 'light',
-                                  );
-                                },
+          : Container(
+              decoration: BoxDecoration(
+                gradient: Theme.of(context).brightness == Brightness.dark
+                    ? LinearGradient(
+                        colors: [Color(0xFF181A20), Color(0xFF23242B)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      )
+                    : LinearGradient(
+                        colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+              ),
+              child: Center(
+                child: FractionallySizedBox(
+                  widthFactor: 0.98,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 480,
+                      minHeight: 520,
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                          child: Card(
+                            color: Theme.of(
+                              context,
+                            ).cardColor.withOpacity(0.90),
+                            elevation: 20,
+                            margin: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(32),
+                              side: BorderSide(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.secondary.withOpacity(0.22),
+                                width: 2.0,
                               ),
-                              const Icon(Icons.dark_mode, size: 20),
-                            ],
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Default Date Range',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ListTile(
-                            title: const Text('Start Date'),
-                            subtitle: Text(
-                              DateFormat('yyyy-MM-dd').format(defaultStartDate),
                             ),
-                            leading: const Icon(Icons.calendar_today),
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: defaultStartDate,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime.now(),
-                              );
-                              if (picked != null)
-                                setState(() => defaultStartDate = picked);
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: ListTile(
-                            title: const Text('End Date'),
-                            subtitle: Text(
-                              DateFormat('yyyy-MM-dd').format(defaultEndDate),
-                            ),
-                            leading: const Icon(Icons.calendar_today),
-                            onTap: () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: defaultEndDate,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime.now(),
-                              );
-                              if (picked != null)
-                                setState(() => defaultEndDate = picked);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    ListTile(
-                      title: const Text('Default Features'),
-                      subtitle: null,
-                      leading: const Icon(Icons.settings),
-                      trailing: ElevatedButton.icon(
-                        icon: const Icon(Icons.edit),
-                        label: const Text('Edit'),
-                        onPressed: showFeatureSelector,
-                        style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(80, 36),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.save),
-                        label: const Text('Save Settings'),
-                        onPressed: _saveSettings,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    const Divider(),
-                    const Text(
-                      'Model Management',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: searchController,
-                      decoration: const InputDecoration(
-                        labelText: 'Search Models',
-                        prefixIcon: Icon(Icons.search),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    isLoadingModels
-                        ? const Center(child: CircularProgressIndicator())
-                        : filteredModels.isEmpty
-                        ? const Text('No saved models yet.')
-                        : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Saved Models:'),
-                              const SizedBox(height: 8),
-                              ...filteredModels.map(
-                                (m) => ListTile(
-                                  title: Text(m),
-                                  trailing: ElevatedButton.icon(
-                                    icon: const Icon(Icons.download),
-                                    label: const Text('Load'),
-                                    onPressed: () => _loadModel(m),
+                            shadowColor: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.22),
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 28,
+                                vertical: 32,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text(
+                                        'Theme',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      if (themeNotifier != null)
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.light_mode,
+                                              size: 20,
+                                            ),
+                                            Switch(
+                                              value:
+                                                  themeNotifier.value ==
+                                                  ThemeMode.dark,
+                                              onChanged: (val) async {
+                                                themeNotifier.value = val
+                                                    ? ThemeMode.dark
+                                                    : ThemeMode.light;
+                                                final prefs =
+                                                    await SharedPreferences.getInstance();
+                                                await prefs.setString(
+                                                  'theme_mode',
+                                                  val ? 'dark' : 'light',
+                                                );
+                                              },
+                                            ),
+                                            const Icon(
+                                              Icons.dark_mode,
+                                              size: 20,
+                                            ),
+                                          ],
+                                        ),
+                                    ],
                                   ),
-                                ),
+                                  const SizedBox(height: 24),
+                                  const Text(
+                                    'Default Date Range',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ListTile(
+                                          title: const Text('Start Date'),
+                                          subtitle: Text(
+                                            DateFormat(
+                                              'yyyy-MM-dd',
+                                            ).format(defaultStartDate),
+                                          ),
+                                          leading: const Icon(
+                                            Icons.calendar_today,
+                                          ),
+                                          onTap: () async {
+                                            final picked = await showDatePicker(
+                                              context: context,
+                                              initialDate: defaultStartDate,
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime.now(),
+                                            );
+                                            if (picked != null)
+                                              setState(
+                                                () => defaultStartDate = picked,
+                                              );
+                                          },
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: ListTile(
+                                          title: const Text('End Date'),
+                                          subtitle: Text(
+                                            DateFormat(
+                                              'yyyy-MM-dd',
+                                            ).format(defaultEndDate),
+                                          ),
+                                          leading: const Icon(
+                                            Icons.calendar_today,
+                                          ),
+                                          onTap: () async {
+                                            final picked = await showDatePicker(
+                                              context: context,
+                                              initialDate: defaultEndDate,
+                                              firstDate: DateTime(2000),
+                                              lastDate: DateTime.now(),
+                                            );
+                                            if (picked != null)
+                                              setState(
+                                                () => defaultEndDate = picked,
+                                              );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 24),
+                                  ListTile(
+                                    title: const Text('Default Features'),
+                                    subtitle: null,
+                                    leading: const Icon(Icons.settings),
+                                    trailing: ElevatedButton.icon(
+                                      icon: const Icon(Icons.edit),
+                                      label: const Text('Edit'),
+                                      onPressed: showFeatureSelector,
+                                      style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(80, 36),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        backgroundColor: Theme.of(
+                                          context,
+                                        ).colorScheme.secondary,
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        elevation: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 54,
+                                    child: ElevatedButton.icon(
+                                      icon: const Icon(Icons.save, size: 24),
+                                      label: const Text(
+                                        'Save Settings',
+                                        style: TextStyle(fontSize: 17),
+                                      ),
+                                      onPressed: _saveSettings,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.indigo[700],
+                                        foregroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        elevation: 3,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 32),
+                                  const Divider(),
+                                  const Text(
+                                    'Model Management',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: searchController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Search Models',
+                                      prefixIcon: Icon(Icons.search),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  isLoadingModels
+                                      ? const Center(
+                                          child: CircularProgressIndicator(),
+                                        )
+                                      : filteredModels.isEmpty
+                                      ? const Text('No saved models yet.')
+                                      : Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const Text('Saved Models:'),
+                                            const SizedBox(height: 8),
+                                            ...filteredModels.map(
+                                              (m) => ListTile(
+                                                title: Text(m),
+                                                trailing: ElevatedButton.icon(
+                                                  icon: const Icon(
+                                                    Icons.download,
+                                                  ),
+                                                  label: const Text('Load'),
+                                                  onPressed: () =>
+                                                      _loadModel(m),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.teal[600],
+                                                    foregroundColor:
+                                                        Colors.white,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                    ),
+                                                    elevation: 2,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                  ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

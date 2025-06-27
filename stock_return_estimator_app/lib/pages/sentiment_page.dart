@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../api_service.dart';
 import 'dart:async';
+import 'dart:ui';
 
 class SentimentPage extends StatefulWidget {
   const SentimentPage({super.key});
@@ -70,87 +71,183 @@ class _SentimentPageState extends State<SentimentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('📊 Sentiment Analysis'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: tickerController,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter Stock Ticker',
-                        hintText: 'e.g., AAPL, TSLA, GOOGL',
-                        prefixIcon: Icon(Icons.search),
-                        border: OutlineInputBorder(),
-                      ),
-                      onSubmitted: (_) => analyzeSentiment(),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.psychology),
-                        label: Text(
-                          isLoading ? 'Analyzing...' : 'Analyze Sentiment',
-                        ),
-                        onPressed: isLoading ? null : analyzeSentiment,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo[700],
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+        title: ShaderMask(
+          shaderCallback: (Rect bounds) {
+            return LinearGradient(
+              colors: [Color(0xFF00C6FB), Color(0xFF005BEA)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds);
+          },
+          child: const Text(
+            'Sentiment Analysis',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.1,
             ),
-            if (errorMsg != null)
-              Card(
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Icon(Icons.error, color: Colors.red[700]),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          errorMsg!,
-                          style: TextStyle(color: Colors.red[700]),
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: Theme.of(context).brightness == Brightness.dark
+              ? LinearGradient(
+                  colors: [Color(0xFF181A20), Color(0xFF23242B)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [Color(0xFFF8F9FF), Color(0xFFE3E6F3)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+        ),
+        child: Center(
+          child: FractionallySizedBox(
+            widthFactor: 0.98,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420, minHeight: 520),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 36),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Card(
+                      color: Theme.of(context).cardColor.withOpacity(0.90),
+                      elevation: 20,
+                      margin: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(32),
+                        side: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.secondary.withOpacity(0.22),
+                          width: 2.0,
                         ),
                       ),
-                    ],
+                      shadowColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.22),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 32,
+                        ),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Card(
+                                elevation: 0,
+                                color: Colors.transparent,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(0),
+                                  child: Column(
+                                    children: [
+                                      TextField(
+                                        controller: tickerController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Enter Stock Ticker',
+                                          hintText: 'e.g., AAPL, TSLA, GOOGL',
+                                          prefixIcon: Icon(Icons.search),
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        onSubmitted: (_) => analyzeSentiment(),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 54,
+                                        child: ElevatedButton.icon(
+                                          icon: isLoading
+                                              ? const SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                      ),
+                                                )
+                                              : const Icon(
+                                                  Icons.psychology,
+                                                  size: 24,
+                                                ),
+                                          label: Text(
+                                            isLoading
+                                                ? 'Analyzing...'
+                                                : 'Analyze Sentiment',
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                            ),
+                                          ),
+                                          onPressed: isLoading
+                                              ? null
+                                              : analyzeSentiment,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.indigo[700],
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            elevation: 3,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (errorMsg != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 12),
+                                  child: Card(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.errorContainer,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.error,
+                                            color: Colors.red[700],
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              errorMsg!,
+                                              style: TextStyle(
+                                                color: Colors.red[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              if (sentimentData != null) ...[
+                                const SizedBox(height: 16),
+                                _buildOverallSentiment(),
+                                const SizedBox(height: 16),
+                                _buildSentimentFactors(),
+                                const SizedBox(height: 16),
+                                _buildNewsSentiment(),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            if (sentimentData != null) ...[
-              const SizedBox(height: 16),
-              _buildOverallSentiment(),
-              const SizedBox(height: 16),
-              _buildSentimentFactors(),
-              const SizedBox(height: 16),
-              _buildNewsSentiment(),
-            ],
-          ],
+            ),
+          ),
         ),
       ),
     );
