@@ -362,31 +362,113 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ],
                                   ),
                                   const SizedBox(height: 24),
-                                  ListTile(
-                                    title: const Text('Default Features'),
-                                    subtitle: null,
-                                    leading: const Icon(Icons.settings),
-                                    trailing: ElevatedButton.icon(
-                                      icon: const Icon(Icons.edit),
-                                      label: const Text('Edit'),
-                                      onPressed: showFeatureSelector,
-                                      style: ElevatedButton.styleFrom(
-                                        minimumSize: const Size(80, 36),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 8,
+                                  // Clean, responsive layout for Default Features
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4.0,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.settings,
+                                              size: 22,
+                                            ),
+                                            const SizedBox(width: 10),
+                                            const Text(
+                                              'Default Features',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        backgroundColor: Theme.of(
-                                          context,
-                                        ).colorScheme.secondary,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                icon: const Icon(Icons.edit),
+                                                label: const Text('Edit'),
+                                                onPressed: showFeatureSelector,
+                                                style: ElevatedButton.styleFrom(
+                                                  minimumSize: const Size(
+                                                    80,
+                                                    36,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 8,
+                                                      ),
+                                                  backgroundColor: Theme.of(
+                                                    context,
+                                                  ).colorScheme.secondary,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  elevation: 2,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: ElevatedButton.icon(
+                                                icon: const Icon(Icons.refresh),
+                                                label: const Text(
+                                                  'Reset to Defaults',
+                                                ),
+                                                onPressed: () {
+                                                  setState(() {
+                                                    defaultFeatures =
+                                                        List<String>.from(
+                                                          allFeatures,
+                                                        );
+                                                  });
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Features reset to defaults.',
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  minimumSize: const Size(
+                                                    80,
+                                                    36,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 8,
+                                                      ),
+                                                  backgroundColor:
+                                                      Colors.grey[600],
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
+                                                        ),
+                                                  ),
+                                                  elevation: 2,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        elevation: 2,
-                                      ),
+                                      ],
                                     ),
                                   ),
                                   const SizedBox(height: 24),

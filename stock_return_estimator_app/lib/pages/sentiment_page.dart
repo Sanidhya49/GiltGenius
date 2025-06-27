@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../api_service.dart';
 import 'dart:async';
 import 'dart:ui';
+import 'package:url_launcher/url_launcher.dart';
 
 class SentimentPage extends StatefulWidget {
   const SentimentPage({super.key});
@@ -554,6 +555,24 @@ class _SentimentPageState extends State<SentimentPage> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(
+                        onTap: () async {
+                          final url = article['url'];
+                          if (url != null) {
+                            final uri = Uri.parse(url);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Could not open the link.'),
+                                ),
+                              );
+                            }
+                          }
+                        },
                         title: Text(
                           article['title'] ?? '',
                           style: const TextStyle(fontSize: 14),
@@ -596,8 +615,23 @@ class _SentimentPageState extends State<SentimentPage> {
                         ),
                         trailing: IconButton(
                           icon: const Icon(Icons.open_in_new, size: 16),
-                          onPressed: () {
-                            // You can add URL launcher here to open the article
+                          onPressed: () async {
+                            final url = article['url'];
+                            if (url != null) {
+                              final uri = Uri.parse(url);
+                              if (await canLaunchUrl(uri)) {
+                                await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Could not open the link.'),
+                                  ),
+                                );
+                              }
+                            }
                           },
                         ),
                       ),
