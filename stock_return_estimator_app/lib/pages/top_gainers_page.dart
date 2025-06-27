@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../api_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
+import 'package:shimmer/shimmer.dart';
 
 class TopGainersPage extends StatefulWidget {
   const TopGainersPage({super.key});
@@ -191,8 +192,70 @@ class _TopGainersPageState extends State<TopGainersPage>
                             ),
                           Expanded(
                             child: isLoading
-                                ? const Center(
-                                    child: CircularProgressIndicator(),
+                                ? ListView.separated(
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: 6,
+                                    separatorBuilder: (_, __) =>
+                                        const Divider(height: 1),
+                                    itemBuilder: (context, index) =>
+                                        Shimmer.fromColors(
+                                          baseColor: Colors.grey[300]!,
+                                          highlightColor: Colors.grey[100]!,
+                                          child: Card(
+                                            color: Colors.white,
+                                            elevation: 2,
+                                            margin: const EdgeInsets.symmetric(
+                                              vertical: 6,
+                                            ),
+                                            child: ListTile(
+                                              leading: Container(
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                              title: Container(
+                                                width: double.infinity,
+                                                height: 14,
+                                                color: Colors.white,
+                                              ),
+                                              subtitle: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  const SizedBox(height: 8),
+                                                  Container(
+                                                    width: 120,
+                                                    height: 12,
+                                                    color: Colors.white,
+                                                  ),
+                                                ],
+                                              ),
+                                              trailing: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.end,
+                                                children: [
+                                                  Container(
+                                                    width: 40,
+                                                    height: 14,
+                                                    color: Colors.white,
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Container(
+                                                    width: 40,
+                                                    height: 12,
+                                                    color: Colors.white,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                   )
                                 : isError
                                 ? Center(

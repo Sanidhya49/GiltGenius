@@ -7,6 +7,7 @@ import '../constants.dart';
 import 'dart:async';
 import 'package:flutter/rendering.dart';
 import 'dart:ui';
+import 'package:shimmer/shimmer.dart';
 
 class ResultPage extends StatefulWidget {
   const ResultPage({super.key});
@@ -467,6 +468,7 @@ class _ResultPageState extends State<ResultPage> {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
