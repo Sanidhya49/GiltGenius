@@ -1,4 +1,4 @@
-# Stock Return Estimator
+# GiltGenius
 
 A cross-platform (Flutter) app and Python backend for predicting stock returns, visualizing strategies, and exploring technical indicators. **Note:** This public repository does not include proprietary model files, custom themes, or production API keys. For demo/educational use only.
 
