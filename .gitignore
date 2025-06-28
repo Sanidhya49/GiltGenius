@@ -10,6 +10,7 @@ __pycache__/
 /venv/
 /data/
 *.sqlite3
+stock_return_estimator_backend\.env
 *.db
 *.pkl
 stock_return_estimator_backend/models/*.pkl
