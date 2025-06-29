@@ -72,8 +72,11 @@ A cross-platform (Flutter) app and Python backend for predicting stock returns, 
 ## Contribution & License
 - All dependencies are tracked in `requirements.txt` (backend) and `pubspec.yaml` (frontend)
 - PRs and issues welcome!
-- **License:** MIT (or add your own)
-
+- **License:** MIT
+  
+---
+You can check out my blog for more information:
+https://alwaysanidhya.medium.com/ever-wanted-a-crystal-ball-for-stocks-meet-giltgenius-2ab3b27c07ef
 ---
 
 ## Disclaimer
