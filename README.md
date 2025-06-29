@@ -65,7 +65,14 @@ A cross-platform (Flutter) app and Python backend for predicting stock returns, 
 ---
 
 ## Screenshots
-> _Add screenshots or a demo video here to showcase the UI and features._
+![Screenshot 2025-06-28 035914](https://github.com/user-attachments/assets/dcc74601-6b54-47dd-ae8d-cdc4e0b796ac)
+![Screenshot 2025-06-29 015426](https://github.com/user-attachments/assets/1031e485-70c2-4d65-b204-2cd02da8f02b)
+
+
+
+
+
+
 
 ---
 
